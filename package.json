@@ -1,0 +1,66 @@
+{
+  "name": "shapurid-taskmanager",
+  "version": "0.0.1",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "build-configs": "babel webpack.config.js --out-dir dist",
+    "build-server": "NODE_ENV=production babel server --out-dir dist/server --source-maps inline && npm run build-configs && cp -r server/views dist/server/views",
+    "build-frontend": "NODE_ENV=production webpack -p",
+    "build": "rm -rf dist && npm run build-frontend && npm run build-server",
+    "start": "NODE_ENV=production node dist/server/bin/server.js",
+    "develop": "npx nodemon --exec DEBUG=application:* npx babel-node server/bin/server.js",
+    "eslint": "eslint",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shapurid/backend-project-lvl4.git"
+  },
+  "author": "Ivan Korney",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shapurid/backend-project-lvl4/issues"
+  },
+  "homepage": "https://github.com/shapurid/backend-project-lvl4#readme",
+  "dependencies": {
+    "bootstrap": "^4.5.2",
+    "dotenv": "^8.2.0",
+    "fastify": "^3.5.0",
+    "fastify-static": "^3.2.0",
+    "lodash": "^4.17.20",
+    "middie": "^5.1.0",
+    "point-of-view": "^4.6.0",
+    "pug": "^3.0.0",
+    "rollbar": "^2.19.3",
+    "webpack": "^4.44.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.11.6",
+    "@babel/core": "^7.11.6",
+    "@babel/node": "^7.10.5",
+    "@babel/preset-env": "^7.11.5",
+    "@jest/globals": "^26.4.2",
+    "autoprefixer": "^10.0.1",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.3.0",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^4.3.0",
+    "eslint": "^7.10.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-babel": "^5.3.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.0.2",
+    "jest": "^26.4.2",
+    "jest-cli": "^26.4.2",
+    "nodemon": "^2.0.4",
+    "pino-pretty": "^4.2.1",
+    "postcss": "^8.1.1",
+    "postcss-loader": "^4.0.2",
+    "postcss-preset-env": "^6.7.0",
+    "style-loader": "^1.2.1",
+    "supertest": "^5.0.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}
