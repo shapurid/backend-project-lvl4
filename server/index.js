@@ -7,7 +7,6 @@ import dotenv from 'dotenv';
 import webpackConfig from '../webpack.config';
 
 dotenv.config();
-
 const mode = process.env.NODE_ENV || 'development';
 const isProduction = mode === 'production';
 const isDevelopment = mode === 'development';
