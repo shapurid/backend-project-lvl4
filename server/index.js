@@ -4,12 +4,18 @@ import fastifyStatic from 'fastify-static';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
+import Rollbar from 'rollbar';
 import webpackConfig from '../webpack.config';
 
 dotenv.config();
-const mode = process.env.NODE_ENV || 'development';
+const { ROLLBAR: accessToken, NODE_NEV: mode = 'development' } = process.env;
 const isProduction = mode === 'production';
 const isDevelopment = mode === 'development';
+const rollbar = new Rollbar({
+  accessToken,
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+});
 
 const setUpStaticAssets = (app) => {
   const pathPublic = isProduction
@@ -37,6 +43,12 @@ const setUpViews = (app) => {
   });
 };
 
+const setUpErrorHandlers = (app) => {
+  app.setErrorHandler((err) => {
+    rollbar.log(err);
+  });
+};
+
 export default () => {
   const app = fastify({
     logger: {
@@ -45,7 +57,7 @@ export default () => {
       base: null,
     },
   });
-
+  setUpErrorHandlers(app);
   setUpViews(app);
   setUpStaticAssets(app);
   app.get('/', (req, reply) => {
