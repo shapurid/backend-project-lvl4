@@ -1,11 +1,17 @@
 import path from 'path';
 import fastify from 'fastify';
 import fastifyStatic from 'fastify-static';
+import fastifyObjectionjs from 'fastify-objectionjs';
+import fastifyMethodOverride from 'fastify-method-override';
+import fastifyFormBody from 'fastify-formbody';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
 import webpackConfig from '../webpack.config';
+import knexConfig from '../knexfile';
+import models from './models/index';
+import addRoutes from './routes/index';
 
 dotenv.config();
 const { ROLLBAR: accessToken, NODE_NEV: mode = 'development' } = process.env;
@@ -49,6 +55,15 @@ const setUpErrorHandlers = (app) => {
   });
 };
 
+const registerPlugins = (app) => {
+  app.register(fastifyObjectionjs, {
+    knexConfig: knexConfig[mode],
+    models,
+  });
+  app.register(fastifyMethodOverride);
+  app.register(fastifyFormBody);
+};
+
 export default () => {
   const app = fastify({
     logger: {
@@ -57,12 +72,11 @@ export default () => {
       base: null,
     },
   });
+  registerPlugins(app);
+  addRoutes(app);
   setUpErrorHandlers(app);
   setUpViews(app);
   setUpStaticAssets(app);
-  app.get('/', (req, reply) => {
-    reply.view('/index');
-  });
 
   return app;
 };

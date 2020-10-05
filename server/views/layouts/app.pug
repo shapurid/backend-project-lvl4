@@ -1,18 +1,20 @@
 doctype html
 html
   head
-    title blog-express
+    title task-manager
     script(src=assetsPath('main.js'))
     link(href=assetsPath('main.css'))
-  body
-    .container
-      nav.navbar.navbar-light.navbar-expand-sm.navbar-nav
-        a.navbar-brand(href="/") Менеджер задач
-        .collapse.navbar-collapse
-          ul.navbar-nav
-            li.nav-item.active
-              a.nav-link(href="#") Пользователи
-        a.btn.btn-light.mr-1(href="#") Log in
-        a.btn.btn-outline-primary(href="#") Sign up
-    main.container(role="main").my-5
+  body.d-flex.flex-column
+    nav.navbar.navbar-light.navbar-expand-lg
+      a.navbar-brand(href="/") Менеджер задач
+      .collapse.navbar-collapse
+        ul.navbar-nav.mr-auto
+          li.nav-item.active
+            a.nav-link(href="#") Пользователи
+        ul.navbar-nav
+          li.nav-item
+            a.btn.btn-light.mr-2(href="#") Вход
+          li.nav-item
+            a.btn.btn-outline-primary(href="/users/new") Регистрация
+    main.container(role="main").mt-5
       block content

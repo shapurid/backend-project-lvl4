@@ -1,26 +1,24 @@
+import { expect } from '@jest/globals';
 import getApp from '../server';
 
 describe('requests', () => {
   let server;
+  const requests = [
+    [200, '/'],
+    [200, '/users/new'],
+    [404, '/wrong-path'],
+  ];
 
   beforeAll(() => {
     server = getApp();
   });
 
-  test('GET 200 "/"', async () => {
+  test.each(requests)('GET %d %p', async (status, route) => {
     const res = await server.inject({
       method: 'GET',
-      url: '/',
+      url: route,
     });
-    expect(res.statusCode).toBe(200);
-  });
-
-  test('GET 404 "/wrong-route"', async () => {
-    const res = await server.inject({
-      method: 'GET',
-      url: '/wrong-route',
-    });
-    expect(res.statusCode).toBe(404);
+    expect(res.statusCode).toBe(status);
   });
 
   afterAll(() => {

@@ -1,0 +1,22 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-5
+      h3.mb-4 Регистрация
+      form(method='POST' action='/users')
+        .form-group
+          label Имя:
+          input.form-control(type='text' name='firstName')
+        .form-group
+          label Фамилия:
+          input.form-control(type='text' name='lastName')
+        .form-group
+          label E-mail:
+          input.form-control(type='email' name='email')
+        .form-group
+          label Пароль:
+          input.form-control(type='password' name='password')
+        button.btn.btn-warning.btn-block(type='submit') Зарегистрироваться
+    .col
