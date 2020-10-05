@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    title blog-express
+    script(src=assetsPath('main.js'))
+    link(href=assetsPath('main.css'))
+  body
+    .container
+      nav.navbar.navbar-light.navbar-expand-sm.navbar-nav
+        a.navbar-brand(href="/") Менеджер задач
+        .collapse.navbar-collapse
+          ul.navbar-nav
+            li.nav-item.active
+              a.nav-link(href="#") Пользователи
+        a.btn.btn-light.mr-1(href="#") Log in
+        a.btn.btn-outline-primary(href="#") Sign up
+    main.container(role="main").my-5
+      block content
