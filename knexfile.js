@@ -1,7 +1,7 @@
-const path = require('path');
+const { resolve } = require('path');
 
 const migrations = {
-  directory: path.resolve('server', 'migrations'),
+  directory: resolve('server', 'migrations'),
 };
 
 module.exports = {
@@ -18,10 +18,9 @@ module.exports = {
     migrations,
   },
   production: {
-    client: 'sqlite3',
-    connection: {
-      filename: './database.sqlite',
-    },
+    client: 'pg',
+    version: '12.4',
+    connection: process.env.DATABASE_URL,
     migrations,
   },
 };

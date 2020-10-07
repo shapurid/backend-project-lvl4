@@ -1,5 +1,6 @@
 export default (app) => {
   app.get('/', (req, reply) => {
-    reply.view('/welcome/index');
+    const name = req.signedIn ? req.currentUser.firstName : 'Гость';
+    reply.render('/welcome/index', { name });
   });
 };

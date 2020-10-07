@@ -1,0 +1,20 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-5
+      h3.mb-4 Вход
+      form(action='/session' method='post')
+        .form-group
+          label E-mail:
+          input.form-control(type='email' name='email' value=email)
+        .form-group
+          label Пароль:
+          if error
+            input.form-control.is-invalid(type='password' name='password')
+            .invalid-feedback= error
+          else
+            input.form-control(type='password' name='password')
+        button.btn.btn-info.btn-block(type='submit') Войти
+    .col

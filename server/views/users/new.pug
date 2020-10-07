@@ -8,15 +8,31 @@ block content
       form(method='POST' action='/users')
         .form-group
           label Имя:
-          input.form-control(type='text' name='firstName')
+          if errors.firstName
+            input.form-control.is-invalid(type='text' name='firstName')
+            .invalid-feedback Пожалуйста, введите Ваше имя
+          else
+            input.form-control(type='text' name='firstName' value=firstName)
         .form-group
           label Фамилия:
-          input.form-control(type='text' name='lastName')
+          if errors.lastName
+            input.form-control.is-invalid(type='text' name='lastName')
+            .invalid-feedback Пожалуйста, введите Вашу фамилию
+          else
+            input.form-control(type='text' name='lastName' value=lastName)
         .form-group
           label E-mail:
-          input.form-control(type='email' name='email')
+          if errors.email
+            input.form-control.is-invalid(type='email' name='email')
+            .invalid-feedback Пожалуйста, введите адрес Вашей эллектронной почты
+          else
+            input.form-control(type='email' name='email' value=email)
         .form-group
           label Пароль:
-          input.form-control(type='password' name='password')
+          if errors.password
+            input.form-control.is-invalid(type='password' name='password' minlength="3")
+            .invalid-feedback Введите пароль
+          else
+            input.form-control(type='password' name='password' minlength="3")
         button.btn.btn-warning.btn-block(type='submit') Зарегистрироваться
     .col

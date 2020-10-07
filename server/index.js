@@ -3,6 +3,7 @@ import fastify from 'fastify';
 import fastifyStatic from 'fastify-static';
 import fastifyObjectionjs from 'fastify-objectionjs';
 import fastifyMethodOverride from 'fastify-method-override';
+import fastifySecureSession from 'fastify-secure-session';
 import fastifyFormBody from 'fastify-formbody';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
@@ -14,7 +15,9 @@ import models from './models/index';
 import addRoutes from './routes/index';
 
 dotenv.config();
-const { ROLLBAR: accessToken, NODE_NEV: mode = 'development' } = process.env;
+const {
+  ROLLBAR: accessToken, NODE_ENV: mode = 'development', SECRET_KEY: secret, SALT: salt,
+} = process.env;
 const isProduction = mode === 'production';
 const isDevelopment = mode === 'development';
 const rollbar = new Rollbar({
@@ -47,6 +50,9 @@ const setUpViews = (app) => {
     },
     root: path.join(__dirname, '..', 'server', 'views'),
   });
+  app.decorateReply('render', function render(viewPath, locals) {
+    this.view(viewPath, { ...locals, reply: this });
+  });
 };
 
 const setUpErrorHandlers = (app) => {
@@ -62,6 +68,23 @@ const registerPlugins = (app) => {
   });
   app.register(fastifyMethodOverride);
   app.register(fastifyFormBody);
+  app.register(fastifySecureSession, {
+    secret,
+    salt,
+  });
+};
+
+const addHooks = (app) => {
+  app.decorateRequest('currentUser', null);
+  app.decorateRequest('signedIn', false);
+
+  app.addHook('preHandler', async (req) => {
+    const userId = req.session.get('userId');
+    if (userId) {
+      req.currentUser = await app.objection.models.user.query().findById(userId);
+      req.signedIn = true;
+    }
+  });
 };
 
 export default () => {
@@ -73,6 +96,7 @@ export default () => {
     },
   });
   registerPlugins(app);
+  addHooks(app);
   addRoutes(app);
   setUpErrorHandlers(app);
   setUpViews(app);

@@ -3,8 +3,7 @@ exports.up = (knex) => knex.schema.createTable('users', (table) => {
   table.string('first_name');
   table.string('last_name');
   table.string('email');
-  table.string('password');
-  table.timestamp('created_at').defaultTo(knex.fn.now());
+  table.string('password_digest');
 });
 
 exports.down = (knex) => knex.schema.dropTable('users');

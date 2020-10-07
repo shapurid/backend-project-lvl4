@@ -12,9 +12,15 @@ html
           li.nav-item.active
             a.nav-link(href="#") Пользователи
         ul.navbar-nav
-          li.nav-item
-            a.btn.btn-light.mr-2(href="#") Вход
-          li.nav-item
-            a.btn.btn-outline-primary(href="/users/new") Регистрация
+          if reply.request.signedIn
+            li.nav-item
+              form.form-inline(action='/session' method='post')
+                input(type="hidden" name="_method" value="DELETE")
+                button.btn.btn-outline-danger(type="submit") Выйти
+          else
+            li.nav-item
+              a.btn.btn-light.mr-2(href="/session/new") Вход
+            li.nav-item
+              a.btn.btn-outline-primary(href="/users/new") Регистрация
     main.container(role="main").mt-5
       block content
