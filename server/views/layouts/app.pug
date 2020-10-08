@@ -5,7 +5,7 @@ html
     script(src=assetsPath('main.js'))
     link(href=assetsPath('main.css'))
   body.d-flex.flex-column
-    nav.navbar.navbar-light.navbar-expand-lg
+    nav.navbar.navbar-light.navbar-expand-lg.mb-3
       a.navbar-brand(href="/") Менеджер задач
       .collapse.navbar-collapse
         ul.navbar-nav.mr-auto
@@ -22,5 +22,12 @@ html
               a.btn.btn-light.mr-2(href="/session/new") Вход
             li.nav-item
               a.btn.btn-outline-primary(href="/users/new") Регистрация
-    main.container(role="main").mt-5
+    - const flashMessage = reply.flash();
+    if flashMessage
+     each message, typeOfMessage in flashMessage
+      .container
+        .alert.alert-dismissible.fade.show(class=`alert-${typeOfMessage}` role="alert")= message
+          button.close(type="button" data-dismiss="alert" aria-label="Close")
+            span(aria-hidden="true") &times;
+    main.container(role="main").mt-2
       block content

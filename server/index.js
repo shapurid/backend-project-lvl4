@@ -5,6 +5,7 @@ import fastifyObjectionjs from 'fastify-objectionjs';
 import fastifyMethodOverride from 'fastify-method-override';
 import fastifySecureSession from 'fastify-secure-session';
 import fastifyFormBody from 'fastify-formbody';
+import fastifyFlash from 'fastify-flash';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
@@ -72,6 +73,7 @@ const registerPlugins = (app) => {
     secret,
     salt,
   });
+  app.register(fastifyFlash);
 };
 
 const addHooks = (app) => {

@@ -1,4 +1,4 @@
-import { keys, omit, isEmpty } from 'lodash';
+import { keys, omit } from 'lodash';
 
 export default (app) => {
   app
@@ -9,13 +9,15 @@ export default (app) => {
     .post('/users', async (req, reply) => {
       try {
         const user = await app.objection.models.user.fromJson(req.body);
-        const findedUser = await app.objection.models.user.query().where('email', req.body.email);
-        if (!isEmpty(findedUser)) {
+        const findedUser = await app.objection.models.user.query().findOne({ email: user.email });
+        if (findedUser) {
+          req.flash('danger', 'Пользователь с таким e-mail уже зарегистрирован.');
           reply.render('/users/new', { errors: {} });
           return reply;
         }
         await app.objection.models.user.query().insert(user);
-        reply.redirect(302, '/');
+        req.flash('success', 'Вы успешно зарегистрированы.');
+        reply.redirect('/');
         return reply;
       } catch ({ data }) {
         const validValues = omit(req.body, ['password', ...keys(data)]);
