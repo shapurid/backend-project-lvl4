@@ -17,7 +17,10 @@ import addRoutes from './routes/index';
 
 dotenv.config();
 const {
-  ROLLBAR: accessToken, NODE_ENV: mode = 'development', SECRET_KEY: secret, SALT: salt,
+  ROLLBAR: accessToken,
+  NODE_ENV: mode = 'development',
+  SECRET_KEY: secret = 'averylogphrasebiggerthanthirtytwochars',
+  SALT: salt = 'mq9hDxBVDbspDR6n',
 } = process.env;
 const isProduction = mode === 'production';
 const isDevelopment = mode === 'development';
