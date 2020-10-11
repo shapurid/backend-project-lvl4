@@ -1,10 +1,17 @@
 import { expect } from '@jest/globals';
 import faker from 'faker';
 import knex from 'knex';
+import request from 'supertest';
 import { test as testConfig } from '../knexfile';
 import getApp from '../server';
 
 const db = knex(testConfig);
+const generateUser = () => ({
+  firstName: faker.name.firstName(),
+  lastName: faker.name.lastName(),
+  email: faker.internet.email(),
+  password: faker.internet.password(),
+});
 
 describe('requests', () => {
   let server;
@@ -14,41 +21,41 @@ describe('requests', () => {
     [200, '/session/new'],
     [404, '/wrong-path'],
   ];
-  const postRequests = [
-    [302, '/users'],
-  ];
 
   beforeAll(async () => {
-    server = getApp();
+    server = getApp().server;
     await db.migrate.latest();
   });
 
   test.each(getRequests)('GET %d %p', async (expectedStatus, route) => {
-    const res = await server.inject({
-      method: 'GET',
-      url: route,
-    });
-    expect(res.statusCode).toBe(expectedStatus);
+    const res = await request(server).get(route);
+    expect(res.status).toBe(expectedStatus);
   });
-  test.each(postRequests)('POST %d %p', async (expectedStatus, route) => {
-    const firstName = faker.name.firstName();
-    const lastName = faker.name.lastName();
-    const email = faker.internet.email();
-    const password = faker.internet.password();
-    const res = await server.inject({
-      method: 'POST',
-      url: route,
-      body: {
-        firstName,
-        lastName,
-        email,
-        password,
-      },
-    });
-    expect(res.statusCode).toBe(expectedStatus);
+  test('POST /users', async () => {
+    const user = generateUser();
+    const res = await request(server)
+      .post('/users')
+      .type('form')
+      .send(user);
+    expect(res.status).toBe(302);
+  });
+  test('POST /session', async () => {
+    const user = generateUser();
+    const res = await request(server)
+      .post('/users')
+      .type('form')
+      .send(user);
+    expect(res.status).toBe(302);
+    const sessionRes = await request(server)
+      .post('/session')
+      .type('form')
+      .send({ email: user.email, password: user.password });
+    expect(sessionRes.status).toBe(302);
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     server.close();
+    await db.migrate.down();
+    await db.destroy();
   });
 });

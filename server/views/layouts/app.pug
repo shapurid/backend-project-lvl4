@@ -10,9 +10,11 @@ html
       .collapse.navbar-collapse
         ul.navbar-nav.mr-auto
           li.nav-item.active
-            a.nav-link(href="#") Пользователи
+            a.nav-link(href="/users") Пользователи
         ul.navbar-nav
           if reply.request.signedIn
+            li.nav-item.active
+              a.nav-link(href=`/users/${reply.request.currentUser.id}`) Личный кабинет
             li.nav-item
               form.form-inline(action='/session' method='post')
                 input(type="hidden" name="_method" value="DELETE")

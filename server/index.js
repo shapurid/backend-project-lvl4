@@ -60,6 +60,14 @@ const setUpErrorHandlers = (app) => {
   app.setErrorHandler((err) => {
     rollbar.log(err);
   });
+  // app.register((instance, options, done) => {
+  //   instance.setNotFoundHandler((req, reply) => {
+  //     reply
+  //       .status(404)
+  //       .render('/errors/404');
+  //   });
+  //   done();
+  // });
 };
 
 const registerPlugins = (app) => {
@@ -70,8 +78,12 @@ const registerPlugins = (app) => {
   app.register(fastifyMethodOverride);
   app.register(fastifyFormBody);
   app.register(fastifySecureSession, {
+    cookieName: 'session-cookie',
     secret,
     salt,
+    cookie: {
+      path: '/',
+    },
   });
   app.register(fastifyFlash);
 };
@@ -96,13 +108,18 @@ export default () => {
       timestamp: isProduction,
       base: null,
     },
+    ajv: {
+      customOptions: {
+        allErrors: true,
+      },
+    },
   });
   registerPlugins(app);
-  addHooks(app);
-  addRoutes(app);
   setUpErrorHandlers(app);
   setUpViews(app);
   setUpStaticAssets(app);
-
+  addHooks(app);
+  addRoutes(app);
+  app.ready();
   return app;
 };
