@@ -1,6 +1,6 @@
-import encrypt from '../lib/secure';
-import validationErrorsHandler from '../errors/validationErrorsHandler';
+import encrypt from '../lib/encrypt';
 import SchemaError from '../errors/SchemaError';
+import validationErrorsHandler from '../errors/validationErrorsHandler';
 
 export default (app) => {
   app
@@ -10,24 +10,13 @@ export default (app) => {
     .post('/session', {
       schema: {
         body: {
-          type: 'object',
-          required: ['email', 'password'],
-          properties: {
-            email: {
-              type: 'string',
-              format: 'email',
-            },
-            password: {
-              type: 'string',
-              minLength: 1,
-            },
-          },
+          $ref: 'sessionSchema#',
         },
       },
       attachValidation: true,
     }, async (req, reply) => {
+      const { validationError, body: { email, password } } = req;
       try {
-        const { validationError, body: { email, password } } = req;
         if (validationError) {
           throw new SchemaError(validationError);
         }
@@ -40,7 +29,7 @@ export default (app) => {
         }
         req.session.set('userId', findedUser.id);
         req.flash('info', 'Вы успешно авторизованы.');
-        reply.redirect('/');
+        reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {
         if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
@@ -54,6 +43,6 @@ export default (app) => {
     .delete('/session', (req, reply) => {
       req.session.set('userId', null);
       req.flash('warning', 'Ждём Вас снова!');
-      reply.redirect('/');
+      reply.redirect(app.reverse('root'));
     });
 };

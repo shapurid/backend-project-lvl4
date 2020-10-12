@@ -1,6 +1,6 @@
 import { Model } from 'objection';
 import objectionUnique from 'objection-unique';
-import encrypt from '../lib/secure';
+import encrypt from '../lib/encrypt';
 
 const unique = objectionUnique({ fields: ['email'] });
 

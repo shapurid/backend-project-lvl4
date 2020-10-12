@@ -15,7 +15,7 @@ module.exports = {
   test: {
     client: 'sqlite3',
     connection: {
-      filename: join(__dirname, '__tests__', '__fixtures__', 'test.sqlite'),
+      filename: ':memory:',
     },
     migrations,
   },

@@ -6,6 +6,8 @@ import fastifyMethodOverride from 'fastify-method-override';
 import fastifySecureSession from 'fastify-secure-session';
 import fastifyFormBody from 'fastify-formbody';
 import fastifyFlash from 'fastify-flash';
+import fastifySensible from 'fastify-sensible';
+import fastifyReverseRoutes from 'fastify-reverse-routes';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
@@ -14,6 +16,7 @@ import webpackConfig from '../webpack.config';
 import knexConfig from '../knexfile';
 import models from './models/index';
 import addRoutes from './routes/index';
+import addSchemas from './schemas/index';
 
 dotenv.config();
 const {
@@ -60,17 +63,19 @@ const setUpViews = (app) => {
 };
 
 const setUpErrorHandlers = (app) => {
-  app.setErrorHandler((err) => {
-    rollbar.log(err);
-  });
-  // app.register((instance, options, done) => {
-  //   instance.setNotFoundHandler((req, reply) => {
-  //     reply
-  //       .status(404)
-  //       .render('/errors/404');
-  //   });
-  //   done();
-  // });
+  app
+    .register(fastifySensible)
+    .after(() => app.setErrorHandler((err, req, reply) => {
+      const { statusCode } = err;
+      if (statusCode) {
+        reply
+          .code(statusCode)
+          .render(`/errors/${statusCode}`);
+        return reply;
+      }
+      rollbar.log(err);
+      return reply;
+    }));
 };
 
 const registerPlugins = (app) => {
@@ -89,17 +94,23 @@ const registerPlugins = (app) => {
     },
   });
   app.register(fastifyFlash);
+  app.register(fastifyReverseRoutes.plugin);
 };
 
 const addHooks = (app) => {
   app.decorateRequest('currentUser', null);
   app.decorateRequest('signedIn', false);
+  app.decorateRequest('isOwnProfile', false);
 
   app.addHook('preHandler', async (req) => {
     const userId = req.session.get('userId');
+    const isUsersRoute = req.url.includes('users');
     if (userId) {
       req.currentUser = await app.objection.models.user.query().findById(userId);
       req.signedIn = true;
+    }
+    if (isUsersRoute && userId) {
+      req.isOwnProfile = userId === Number.parseInt(req.params.id, 10);
     }
   });
 };
@@ -122,7 +133,7 @@ export default () => {
   setUpViews(app);
   setUpStaticAssets(app);
   addHooks(app);
+  addSchemas(app);
   addRoutes(app);
-  app.ready();
   return app;
 };

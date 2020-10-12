@@ -1,14 +1,13 @@
 import {
   pick,
   parseInt,
-  toPairs,
-  fromPairs,
+  omit,
+  pickBy,
+  assign,
 } from 'lodash';
-import encrypt from '../lib/secure';
-import validationErrorsHandler from '../errors/validationErrorsHandler';
 import SchemaError from '../errors/SchemaError';
-import AccessDeniedError from '../errors/AccessDeniedError';
-import NotFoundError from '../errors/NotFoundError';
+import validationErrorsHandler from '../errors/validationErrorsHandler';
+import encrypt from '../lib/encrypt';
 
 export default (app) => {
   app
@@ -24,24 +23,18 @@ export default (app) => {
     .get('/users/:id', async (req, reply) => {
       try {
         if (!req.signedIn) {
-          throw new AccessDeniedError();
+          reply.forbidden();
+          return reply;
         }
         const routeId = parseInt(req.params.id);
         const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(routeId);
         if (!user) {
-          throw new NotFoundError();
+          reply.notFound();
+          return reply;
         }
         reply.render('/users/profile', { ...user, errors: {} });
         return reply;
       } catch (error) {
-        if (error.status === 403) {
-          reply.code(error.status).render('/errors/403');
-          return reply;
-        }
-        if (error.status === 404) {
-          reply.code(error.status).render('/errors/404');
-          return reply;
-        }
         throw new Error(error);
       }
     })
@@ -51,38 +44,19 @@ export default (app) => {
     .post('/users', {
       schema: {
         body: {
-          type: 'object',
-          required: ['firstName', 'lastName', 'email', 'password'],
-          properties: {
-            firstName: {
-              type: 'string',
-              minLength: 1,
-            },
-            lastName: {
-              type: 'string',
-              minLength: 1,
-            },
-            email: {
-              type: 'string',
-              format: 'email',
-            },
-            password: {
-              type: 'string',
-              minLength: 3,
-            },
-          },
+          $ref: 'userRegistrationSchema',
         },
       },
       attachValidation: true,
     }, async (req, reply) => {
+      const { validationError, body } = req;
       try {
-        const { validationError, body } = req;
         if (validationError) {
           throw new SchemaError(validationError);
         }
         const user = await app.objection.models.user.fromJson(body);
-        const findedUser = await app.objection.models.user.query().findOne({ email: user.email });
-        if (findedUser) {
+        const foundedUser = await app.objection.models.user.query().findOne({ email: user.email });
+        if (foundedUser) {
           const data = pick(user, ['firstName', 'lastName']);
           req.flash('danger', 'Пользователь с таким e-mail уже зарегистрирован.');
           reply
@@ -92,7 +66,7 @@ export default (app) => {
         }
         await app.objection.models.user.query().insert(user);
         req.flash('success', 'Вы успешно зарегистрированы.');
-        reply.redirect('/');
+        reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {
         if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
@@ -106,75 +80,36 @@ export default (app) => {
     .patch('/users/:id', {
       schema: {
         body: {
-          type: 'object',
-          required: ['password'],
-          properties: {
-            firstName: {
-              type: 'string',
-              minLength: 1,
-            },
-            lastName: {
-              type: 'string',
-              minLength: 1,
-            },
-            email: {
-              type: 'string',
-              format: 'email',
-            },
-            newPassword: {
-              type: 'string',
-              minLength: 3,
-            },
-            password: {
-              type: 'string',
-              minLength: 3,
-            },
-            _method: {
-              type: 'string',
-            },
-          },
+          $ref: 'userUpdateSchema#',
         },
       },
       attachValidation: true,
     }, async (req, reply) => {
+      const { validationError } = req;
       try {
-        const routeId = parseInt(req.params.id);
-        const sessionId = req.session.get('userId');
-        const { validationError, body: { password, ...otherBodyData } } = req;
-        if (sessionId !== routeId) {
-          throw new AccessDeniedError();
-        }
         if (validationError) {
           throw new SchemaError(validationError);
         }
-        const currentUser = await app.objection.models.user.query().findById(sessionId);
-        if (encrypt(password) !== currentUser.passwordDigest) {
-          reply.render('/users/profile', { ...currentUser, errors: { password: {} } });
+        if (!req.isOwnProfile) {
+          reply.forbidden();
           return reply;
         }
-        const filteredBodyData = toPairs(otherBodyData)
-          .filter(([key, value]) => (key !== '_method') && (value.length > 0))
-          .map(([key, value]) => {
-            if (key === 'newPassword') {
-              return ['password', value];
-            }
-            return [key, value];
-          });
-        const updateObject = fromPairs(filteredBodyData);
-        await currentUser.$query().patch(updateObject);
+        const filteredBody = pickBy(req.body, (el) => el.length > 0);
+        const { password, ...otherData } = filteredBody;
+        const bodyWithUpdatedPassword = assign(otherData,
+          password ? { passwordDigest: encrypt(password) } : {});
+        const bodyWithoutMethod = omit(bodyWithUpdatedPassword, '_method');
+        const sessionId = req.session.get('userId');
+        const currentUser = await app.objection.models.user.query().findById(sessionId);
+        await currentUser.$query().patch(bodyWithoutMethod);
         req.currentUser = currentUser;
         req.flash('info', 'Профиль успешно обновлён.');
-        reply.render('/users/profile', { ...currentUser, errors: {} });
+        reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {
-        console.log(error);
         if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
           const validationResult = validationErrorsHandler(error.data, req.body);
           reply.render('/users/profile', validationResult);
-          return reply;
-        }
-        if (error.status === 403) {
-          reply.render('/errors/403');
           return reply;
         }
         throw new Error(error);
@@ -182,21 +117,13 @@ export default (app) => {
     })
     .delete('/users/:id', async (req, reply) => {
       try {
-        const routeId = parseInt(req.params.id);
         const sessionId = req.session.get('userId');
-        if (sessionId !== routeId) {
-          throw new AccessDeniedError();
-        }
         await app.objection.models.user.query().deleteById(sessionId);
         req.session.set('userId', null);
         req.flash('danger', 'Пользователь удален!');
-        reply.redirect('/');
+        reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {
-        if (error.status === 403) {
-          reply.code(error.status).render('/errors/403');
-          return reply;
-        }
         throw new Error(error);
       }
     });
