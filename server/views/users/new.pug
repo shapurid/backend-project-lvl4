@@ -1,0 +1,38 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-5
+      h3.mb-4 Регистрация
+      form(method='POST' action='/users')
+        .form-group
+          label Имя:
+          if errors.firstName
+            input.form-control.is-invalid(type='text' name='firstName')
+            .invalid-feedback Пожалуйста, введите Ваше имя
+          else
+            input.form-control(type='text' name='firstName' value=firstName)
+        .form-group
+          label Фамилия:
+          if errors.lastName
+            input.form-control.is-invalid(type='text' name='lastName')
+            .invalid-feedback Пожалуйста, введите Вашу фамилию
+          else
+            input.form-control(type='text' name='lastName' value=lastName)
+        .form-group
+          label E-mail:
+          if errors.email
+            input.form-control.is-invalid(type='email' name='email')
+            .invalid-feedback Пожалуйста, введите адрес Вашей эллектронной почты
+          else
+            input.form-control(type='email' name='email' value=email)
+        .form-group
+          label Пароль:
+          if errors.password
+            input.form-control.is-invalid(type='password' name='password' minlength="3")
+            .invalid-feedback Введите пароль
+          else
+            input.form-control(type='password' name='password' minlength="3")
+        button.btn.btn-warning.btn-block(type='submit') Зарегистрироваться
+    .col

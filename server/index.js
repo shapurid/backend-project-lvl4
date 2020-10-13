@@ -1,14 +1,31 @@
 import path from 'path';
 import fastify from 'fastify';
 import fastifyStatic from 'fastify-static';
+import fastifyObjectionjs from 'fastify-objectionjs';
+import fastifyMethodOverride from 'fastify-method-override';
+import fastifySecureSession from 'fastify-secure-session';
+import fastifyFormBody from 'fastify-formbody';
+import fastifyFlash from 'fastify-flash';
+import fastifySensible from 'fastify-sensible';
+import fastifyReverseRoutes from 'fastify-reverse-routes';
 import Pug from 'pug';
+import { parseInt } from 'lodash';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
 import webpackConfig from '../webpack.config';
+import knexConfig from '../knexfile';
+import models from './models/index';
+import addRoutes from './routes/index';
+import addSchemas from './schemas/index';
 
 dotenv.config();
-const { ROLLBAR: accessToken, NODE_NEV: mode = 'development' } = process.env;
+const {
+  ROLLBAR: accessToken,
+  NODE_ENV: mode = 'development',
+  SECRET_KEY: secret = 'averylogphrasebiggerthanthirtytwochars',
+  SALT: salt = 'mq9hDxBVDbspDR6n',
+} = process.env;
 const isProduction = mode === 'production';
 const isDevelopment = mode === 'development';
 const rollbar = new Rollbar({
@@ -41,11 +58,66 @@ const setUpViews = (app) => {
     },
     root: path.join(__dirname, '..', 'server', 'views'),
   });
+  app.decorateReply('render', function render(viewPath, locals) {
+    this.view(viewPath, { ...locals, reply: this });
+  });
 };
 
 const setUpErrorHandlers = (app) => {
-  app.setErrorHandler((err) => {
-    rollbar.log(err);
+  app
+    .register(fastifySensible)
+    .after(() => app.setErrorHandler((err, req, reply) => {
+      const { statusCode } = err;
+      if (statusCode) {
+        reply
+          .code(statusCode)
+          .render(`/errors/${statusCode}`);
+        return reply;
+      }
+      rollbar.log(err);
+      return reply;
+    }));
+};
+
+const registerPlugins = (app) => {
+  app.register(fastifyObjectionjs, {
+    knexConfig: knexConfig[mode],
+    models,
+  });
+  app.register(fastifyMethodOverride);
+  app.register(fastifyFormBody);
+  app.register(fastifySecureSession, {
+    cookieName: 'session-cookie',
+    secret,
+    salt,
+    cookie: {
+      path: '/',
+    },
+  });
+  app.register(fastifyFlash);
+  app.register(fastifyReverseRoutes.plugin);
+};
+
+const addHooks = (app) => {
+  app.decorateRequest('currentUser', null);
+  app.decorateRequest('signedIn', false);
+  app.decorateRequest('isOwnProfile', false);
+
+  app.addHook('preHandler', async (req) => {
+    const userId = req.session.get('userId');
+    const isProfile = /^\/users\/\d+/.test(req.url);
+    if (userId) {
+      req.currentUser = await app.objection.models.user.query().findById(userId);
+      req.signedIn = true;
+    }
+    if (isProfile) {
+      const routeId = req
+        .url
+        .match(/\d+$/g)
+        .join('');
+      req.isOwnProfile = parseInt(routeId) === userId;
+      console.log(req.isOwnProfile);
+    }
   });
 };
 
@@ -56,13 +128,18 @@ export default () => {
       timestamp: isProduction,
       base: null,
     },
+    ajv: {
+      customOptions: {
+        allErrors: true,
+      },
+    },
   });
+  registerPlugins(app);
   setUpErrorHandlers(app);
   setUpViews(app);
   setUpStaticAssets(app);
-  app.get('/', (req, reply) => {
-    reply.view('/index');
-  });
-
+  addHooks(app);
+  addSchemas(app);
+  addRoutes(app);
   return app;
 };

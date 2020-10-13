@@ -1,0 +1,28 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-10
+      p= reply.request.signedIn
+      table.table.table-hover
+        thead.thead-light
+          tr
+            th(scope="col") #
+            th(scope="col") Имя
+            th(scope="col") Фамилия
+            th(scope="col") E-mail
+            th
+        tbody
+          - let n = 0
+          for user of users
+            tr
+              th(scope="row")= n += 1
+              td= user.firstName
+              td= user.lastName
+              td= user.email
+              td
+               if reply.request.signedIn
+                .d-flex
+                  a.btn.btn-outline-info.ml-auto(href=`/users/${user.id}`) Посмотреть профиль
+    .col

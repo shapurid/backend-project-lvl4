@@ -1,29 +1,83 @@
+import { expect, test } from '@jest/globals';
+import faker from 'faker';
+import request from 'supertest';
 import getApp from '../server';
 
-describe('requests', () => {
-  let server;
+const generateUser = () => ({
+  firstName: faker.name.firstName(),
+  lastName: faker.name.lastName(),
+  email: faker.internet.email(),
+  password: faker.internet.password(),
+});
 
-  beforeAll(() => {
-    server = getApp();
-  });
+let app;
+const getRequests = [
+  [200, '/'],
+  [200, '/users/new'],
+  [200, '/session/new'],
+  [200, '/users'],
+  [404, '/wrong-path'],
+];
 
-  test('GET 200 "/"', async () => {
-    const res = await server.inject({
-      method: 'GET',
-      url: '/',
-    });
-    expect(res.statusCode).toBe(200);
-  });
+beforeAll(async () => {
+  app = await getApp().ready();
+  await app
+    .objection
+    .knex
+    .migrate
+    .latest();
+});
 
-  test('GET 404 "/wrong-route"', async () => {
-    const res = await server.inject({
-      method: 'GET',
-      url: '/wrong-route',
-    });
-    expect(res.statusCode).toBe(404);
-  });
+test.each(getRequests)('GET %d %p', async (expectedStatus, route) => {
+  const res = await request(app.server).get(route);
+  expect(res.status).toBe(expectedStatus);
+});
 
-  afterAll(() => {
-    server.close();
-  });
+test('User "CRUD"', async () => {
+  const user = generateUser();
+  const creationRes = await request(app.server)
+    .post('/users')
+    .type('form')
+    .send(user);
+  expect(creationRes.status).toBe(302);
+
+  const authorizationRes = await request(app.server)
+    .post('/session')
+    .type('form')
+    .send({ email: user.email, password: user.password });
+  expect(authorizationRes.status).toBe(302);
+
+  const sessionCookie = authorizationRes.headers['set-cookie'];
+  const selfReadingRes = await request(app.server)
+    .get('/users/1')
+    .set('cookie', sessionCookie);
+  expect(selfReadingRes.status).toBe(200);
+
+  const updatedUser = generateUser();
+  const updationRes = await request(app.server)
+    .patch('/users/1')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ ...updatedUser });
+  expect(updationRes.status).toBe(302);
+
+  const deleteSessionRes = await request(app.server)
+    .delete('/session')
+    .set('cookie', sessionCookie);
+  expect(deleteSessionRes.status).toBe(302);
+
+  const authorizationWithUpdDataRes = await request(app.server)
+    .post('/session')
+    .type('form')
+    .send({ email: updatedUser.email, password: updatedUser.password });
+  expect(authorizationWithUpdDataRes.status).toBe(302);
+
+  const deleteUserRes = await request(app.server)
+    .delete('/users/1')
+    .set('cookie', sessionCookie);
+  expect(deleteUserRes.status).toBe(302);
+});
+
+afterAll(() => {
+  app.close();
 });

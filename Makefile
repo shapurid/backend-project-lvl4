@@ -1,5 +1,14 @@
+setup:
+	npm install
+
 build:
 	npm run build
+
+set-db:
+	npx knex migrate:latest
+
+update-db:
+	rm -rf database.sqlite && make set-db
 
 start:
 	heroku local -f Procfile.dev
