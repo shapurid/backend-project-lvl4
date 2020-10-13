@@ -9,6 +9,7 @@ import fastifyFlash from 'fastify-flash';
 import fastifySensible from 'fastify-sensible';
 import fastifyReverseRoutes from 'fastify-reverse-routes';
 import Pug from 'pug';
+import { parseInt } from 'lodash';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
@@ -104,13 +105,18 @@ const addHooks = (app) => {
 
   app.addHook('preHandler', async (req) => {
     const userId = req.session.get('userId');
-    const isUsersRoute = req.url.includes('users');
+    const isProfile = /^\/users\/\d+/.test(req.url);
     if (userId) {
       req.currentUser = await app.objection.models.user.query().findById(userId);
       req.signedIn = true;
     }
-    if (isUsersRoute && userId) {
-      req.isOwnProfile = userId === Number.parseInt(req.params.id, 10);
+    if (isProfile) {
+      const routeId = req
+        .url
+        .match(/\d+$/g)
+        .join('');
+      req.isOwnProfile = parseInt(routeId) === userId;
+      console.log(req.isOwnProfile);
     }
   });
 };

@@ -1,13 +1,14 @@
 {
   "name": "shapurid-taskmanager",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "",
   "main": "",
   "scripts": {
     "build-configs": "babel webpack.config.js --out-dir dist && cp knexfile.js dist",
     "build-server": "babel server --out-dir dist/server --source-maps inline && npm run build-configs && cp -r server/views dist/server/views",
     "build-frontend": "webpack -p",
-    "build": "rm -rf dist && npm run build-frontend && npm run build-server && NODE_ENV=production knex migrate:latest",
+    "build-test": "rm -rf dist && npm run build-frontend && npm run build-server",
+    "build": "rm -rf dist && npm run build-frontend && npm run build-server && knex migrate:latest",
     "start": "NODE_ENV=production node dist/server/bin/server.js",
     "develop": "npx nodemon --exec DEBUG=application:* npx babel-node server/bin/server.js",
     "eslint": "eslint",

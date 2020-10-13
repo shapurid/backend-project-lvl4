@@ -116,8 +116,12 @@ export default (app) => {
       }
     })
     .delete('/users/:id', async (req, reply) => {
+      if (!req.isOwnProfile) {
+        reply.forbidden();
+        return reply;
+      }
+      const sessionId = req.session.get('userId');
       try {
-        const sessionId = req.session.get('userId');
         await app.objection.models.user.query().deleteById(sessionId);
         req.session.set('userId', null);
         req.flash('danger', 'Пользователь удален!');
