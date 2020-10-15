@@ -8,15 +8,15 @@ export default (app) => {
     .post('/session', async (req, reply) => {
       const { email, password } = req.body;
       try {
-        const foundedUser = email && await app.objection.models.user.query().findOne({ email });
-        if (!foundedUser || (foundedUser.passwordDigest !== encrypt(password))) {
+        const foundUser = email && await app.objection.models.user.query().findOne({ email });
+        if (!foundUser || (foundUser.passwordDigest !== encrypt(password))) {
           req.flash('danger', 'Неправильный e-mail и/или пароль');
           reply
             .code(422)
             .render('/session/new', { email });
           return reply;
         }
-        req.session.set('userId', foundedUser.id);
+        req.session.set('userId', foundUser.id);
         req.flash('info', 'Вы успешно авторизованы.');
         reply.redirect(app.reverse('root'));
         return reply;

@@ -1,8 +1,8 @@
-import { demandSignedIn } from '../lib/preHandlers';
+import { checkSignedIn } from '../lib/preHandlers';
 
 export default (app) => {
   app
-    .get('/taskStatuses', { name: 'taskStatuses', preHandler: demandSignedIn }, async (req, reply) => {
+    .get('/taskStatuses', { name: 'taskStatuses', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const statusList = await app.objection.models.taskStatus.query();
         console.log(statusList);
@@ -12,11 +12,11 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .get('/taskStatuses/new', { preHandler: demandSignedIn }, (req, reply) => {
+    .get('/taskStatuses/new', { preHandler: checkSignedIn }, (req, reply) => {
       reply.render('/taskStatuses/new', { errors: {} });
       return reply;
     })
-    .get('/taskStatuses/:id/edit', { preHandler: demandSignedIn }, async (req, reply) => {
+    .get('/taskStatuses/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const taskName = await app.objection.models.taskStatus.query().findById(req.params.id);
         if (!taskName) {
@@ -29,16 +29,16 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .post('/taskStatuses', { preHandler: demandSignedIn }, async (req, reply) => {
+    .post('/taskStatuses', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const status = await app.objection.models.taskStatus.fromJson(req.body);
-        const foundedTaskStatus = await app
+        const foundTaskStatus = await app
           .objection
           .models
           .taskStatus
           .query()
           .findOne({ name: status.name });
-        if (foundedTaskStatus) {
+        if (foundTaskStatus) {
           req.flash('danger', 'Статус задачи с этим именем уже зарегистрирован');
           reply
             .status(422)
@@ -56,7 +56,7 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/taskStatuses/:id/edit', { preHandler: demandSignedIn }, async (req, reply) => {
+    .patch('/taskStatuses/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const { name } = req.body;
         if (!name) {
@@ -74,7 +74,7 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .delete('/taskStatuses/:id', { preHandler: demandSignedIn }, async (req, reply) => {
+    .delete('/taskStatuses/:id', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         await app.objection.models.taskStatus.query().deleteById(req.params.id);
         req.flash('danger', 'Статус задачи удалён!');

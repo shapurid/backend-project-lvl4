@@ -5,7 +5,7 @@ import {
   pickBy,
   assign,
 } from 'lodash';
-import { demandSignedIn, demandProfileOwnership } from '../lib/preHandlers';
+import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
 import encrypt from '../lib/encrypt';
 
 export default (app) => {
@@ -19,7 +19,7 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .get('/users/:id', { preHandler: demandSignedIn }, async (req, reply) => {
+    .get('/users/:id', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const normalizedRouteId = parseInt(req.params.id);
         const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(normalizedRouteId);
@@ -39,8 +39,8 @@ export default (app) => {
     .post('/users', async (req, reply) => {
       try {
         const user = await app.objection.models.user.fromJson(req.body);
-        const foundedUser = await app.objection.models.user.query().findOne({ email: user.email });
-        if (foundedUser) {
+        const foundUser = await app.objection.models.user.query().findOne({ email: user.email });
+        if (foundUser) {
           const data = pick(user, ['firstName', 'lastName']);
           req.flash('danger', 'Пользователь с таким e-mail уже зарегистрирован.');
           reply
@@ -59,7 +59,7 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/users/:id', { preHandler: demandProfileOwnership }, async (req, reply) => {
+    .patch('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
       try {
         const filteredBody = pickBy(req.body, (el) => el.length > 0);
         const { password, ...otherData } = filteredBody;
@@ -80,7 +80,7 @@ export default (app) => {
         return reply;
       }
     })
-    .delete('/users/:id', { preHandler: demandProfileOwnership }, async (req, reply) => {
+    .delete('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
       try {
         const sessionId = req.session.get('userId');
         await app.objection.models.user.query().deleteById(sessionId);
