@@ -118,6 +118,7 @@ test('Task statuses "CRUD"', async () => {
     .set('cookie', sessionCookie);
   expect(deleteTaskStatus.status).toBe(302);
 });
+
 afterAll(() => {
   app.close();
 });
