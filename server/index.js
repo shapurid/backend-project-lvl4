@@ -9,7 +9,6 @@ import fastifyFlash from 'fastify-flash';
 import fastifySensible from 'fastify-sensible';
 import fastifyReverseRoutes from 'fastify-reverse-routes';
 import Pug from 'pug';
-import { parseInt } from 'lodash';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';

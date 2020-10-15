@@ -5,7 +5,6 @@ export default (app) => {
     .get('/taskStatuses', { name: 'taskStatuses', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const statusList = await app.objection.models.taskStatus.query();
-        console.log(statusList);
         reply.render('/taskStatuses/index', { statusList });
         return reply;
       } catch (error) {
