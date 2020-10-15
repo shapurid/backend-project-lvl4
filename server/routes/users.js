@@ -5,8 +5,7 @@ import {
   pickBy,
   assign,
 } from 'lodash';
-import SchemaError from '../errors/SchemaError';
-import validationErrorsHandler from '../errors/validationErrorsHandler';
+import { demandSignedIn, demandProfileOwnership } from '../lib/preHandlers';
 import encrypt from '../lib/encrypt';
 
 export default (app) => {
@@ -20,14 +19,10 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .get('/users/:id', async (req, reply) => {
+    .get('/users/:id', { preHandler: demandSignedIn }, async (req, reply) => {
       try {
-        if (!req.signedIn) {
-          reply.forbidden();
-          return reply;
-        }
-        const routeId = parseInt(req.params.id);
-        const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(routeId);
+        const normalizedRouteId = parseInt(req.params.id);
+        const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(normalizedRouteId);
         if (!user) {
           reply.notFound();
           return reply;
@@ -41,20 +36,9 @@ export default (app) => {
     .get('/users/new', (req, reply) => {
       reply.render('/users/new', { errors: {} });
     })
-    .post('/users', {
-      schema: {
-        body: {
-          $ref: 'userRegistrationSchema',
-        },
-      },
-      attachValidation: true,
-    }, async (req, reply) => {
-      const { validationError, body } = req;
+    .post('/users', async (req, reply) => {
       try {
-        if (validationError) {
-          throw new SchemaError(validationError);
-        }
-        const user = await app.objection.models.user.fromJson(body);
+        const user = await app.objection.models.user.fromJson(req.body);
         const foundedUser = await app.objection.models.user.query().findOne({ email: user.email });
         if (foundedUser) {
           const data = pick(user, ['firstName', 'lastName']);
@@ -68,32 +52,15 @@ export default (app) => {
         req.flash('success', 'Вы успешно зарегистрированы.');
         reply.redirect(app.reverse('root'));
         return reply;
-      } catch (error) {
-        if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
-          const validationResult = validationErrorsHandler(error.data, req.body);
-          reply.render('/users/new', validationResult);
-          return reply;
-        }
-        throw new Error(error);
+      } catch ({ data }) {
+        reply
+          .code(422)
+          .render('users/new', { errors: data, ...req.body });
+        return reply;
       }
     })
-    .patch('/users/:id', {
-      schema: {
-        body: {
-          $ref: 'userUpdateSchema#',
-        },
-      },
-      attachValidation: true,
-    }, async (req, reply) => {
-      const { validationError } = req;
+    .patch('/users/:id', { preHandler: demandProfileOwnership }, async (req, reply) => {
       try {
-        if (validationError) {
-          throw new SchemaError(validationError);
-        }
-        if (!req.isOwnProfile) {
-          reply.forbidden();
-          return reply;
-        }
         const filteredBody = pickBy(req.body, (el) => el.length > 0);
         const { password, ...otherData } = filteredBody;
         const bodyWithUpdatedPassword = assign(otherData,
@@ -106,22 +73,16 @@ export default (app) => {
         req.flash('info', 'Профиль успешно обновлён.');
         reply.redirect(app.reverse('root'));
         return reply;
-      } catch (error) {
-        if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
-          const validationResult = validationErrorsHandler(error.data, req.body);
-          reply.render('/users/profile', validationResult);
-          return reply;
-        }
-        throw new Error(error);
-      }
-    })
-    .delete('/users/:id', async (req, reply) => {
-      if (!req.isOwnProfile) {
-        reply.forbidden();
+      } catch ({ data }) {
+        reply
+          .code(422)
+          .render('users/new', { errors: data, ...req.body });
         return reply;
       }
-      const sessionId = req.session.get('userId');
+    })
+    .delete('/users/:id', { preHandler: demandProfileOwnership }, async (req, reply) => {
       try {
+        const sessionId = req.session.get('userId');
         await app.objection.models.user.query().deleteById(sessionId);
         req.session.set('userId', null);
         req.flash('danger', 'Пользователь удален!');

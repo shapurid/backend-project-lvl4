@@ -1,0 +1,27 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-6
+        table.table.table-hover.mb-4
+          thead.thead-light
+            tr
+              th(scope="col") #
+              th(scope="col") Имя статуса
+              th
+          if statusList.length > 0
+           tbody
+            - let n = 0
+            for taskStatus of statusList
+              tr
+                th(scope="row")= n += 1
+                td= taskStatus.name
+                td
+                  .d-flex.justify-content-end
+                      a.btn.btn-outline-info.mr-2(href=`/taskStatuses/${taskStatus.id}/edit`) Изменить
+                      form.form-inline(action=`/taskStatuses/${taskStatus.id}` method='post')
+                        input(type="hidden" name="_method" value="DELETE")
+                        button.btn.btn-danger(type="submit") Удалить
+        a.btn.btn-dark.btn-block(href="/taskStatuses/new") Добавить статус
+    .col

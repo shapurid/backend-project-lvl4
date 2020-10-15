@@ -1,42 +1,26 @@
 import encrypt from '../lib/encrypt';
-import SchemaError from '../errors/SchemaError';
-import validationErrorsHandler from '../errors/validationErrorsHandler';
 
 export default (app) => {
   app
     .get('/session/new', (req, reply) => {
-      reply.render('/session/new', { errors: {} });
+      reply.render('/session/new');
     })
-    .post('/session', {
-      schema: {
-        body: {
-          $ref: 'sessionSchema#',
-        },
-      },
-      attachValidation: true,
-    }, async (req, reply) => {
-      const { validationError, body: { email, password } } = req;
+    .post('/session', async (req, reply) => {
+      const { email, password } = req.body;
       try {
-        if (validationError) {
-          throw new SchemaError(validationError);
-        }
-        const findedUser = await app.objection.models.user.query().findOne({ email });
-        if (!findedUser || (findedUser.passwordDigest !== encrypt(password))) {
-          reply.code(422);
+        const foundedUser = email && await app.objection.models.user.query().findOne({ email });
+        if (!foundedUser || (foundedUser.passwordDigest !== encrypt(password))) {
           req.flash('danger', 'Неправильный e-mail и/или пароль');
-          reply.render('/session/new', { errors: { password: {} }, email });
+          reply
+            .code(422)
+            .render('/session/new', { email });
           return reply;
         }
-        req.session.set('userId', findedUser.id);
+        req.session.set('userId', foundedUser.id);
         req.flash('info', 'Вы успешно авторизованы.');
         reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {
-        if (error.type === 'ModelValidation' || error.type === 'SchemaError') {
-          const validationResult = validationErrorsHandler(error.data, req.body);
-          reply.render('/session/new', validationResult);
-          return reply;
-        }
         throw new Error(error);
       }
     })

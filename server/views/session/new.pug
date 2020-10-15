@@ -8,17 +8,9 @@ block content
       form(action='/session' method='post')
         .form-group
           label E-mail:
-          if errors.email
-            input.form-control.is-invalid(type='email' name='email')
-            .invalid-feedback Пожалуйста, введите адрес Вашей эллектронной почты
-          else
-            input.form-control(type='email' name='email' value=email)
+          input.form-control(type='email' name='email' value=email)
         .form-group
           label Пароль:
-          if errors.password
-            input.form-control.is-invalid(type='password' name='password' minlength="3")
-            .invalid-feedback Введите пароль
-          else
-            input.form-control(type='password' name='password' minlength="3")
+          input.form-control(type='password' name='password' minlength="3")
         button.btn.btn-info.btn-block(type='submit') Войти
     .col

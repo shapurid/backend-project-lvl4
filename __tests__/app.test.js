@@ -78,6 +78,46 @@ test('User "CRUD"', async () => {
   expect(deleteUserRes.status).toBe(302);
 });
 
+test('Task statuses "CRUD"', async () => {
+  const user = generateUser();
+  const creationRes = await request(app.server)
+    .post('/users')
+    .type('form')
+    .send(user);
+  expect(creationRes.status).toBe(302);
+
+  const authorizationRes = await request(app.server)
+    .post('/session')
+    .type('form')
+    .send({ email: user.email, password: user.password });
+  expect(authorizationRes.status).toBe(302);
+
+  const sessionCookie = authorizationRes.headers['set-cookie'];
+
+  const addTaskStatus = await request(app.server)
+    .post('/taskStatuses')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ name: 'Не готово' });
+  expect(addTaskStatus.status).toBe(302);
+
+  const readTaskStatuses = await request(app.server)
+    .get('/taskStatuses')
+    .set('cookie', sessionCookie);
+  expect(readTaskStatuses.status).toBe(200);
+
+  const updTaskStatus = await request(app.server)
+    .patch('/taskStatuses/1/edit')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ name: 'Готово' });
+  expect(updTaskStatus.status).toBe(302);
+
+  const deleteTaskStatus = await request(app.server)
+    .delete('/taskStatuses/1')
+    .set('cookie', sessionCookie);
+  expect(deleteTaskStatus.status).toBe(302);
+});
 afterAll(() => {
   app.close();
 });
