@@ -9,7 +9,6 @@ import fastifyFlash from 'fastify-flash';
 import fastifySensible from 'fastify-sensible';
 import fastifyReverseRoutes from 'fastify-reverse-routes';
 import Pug from 'pug';
-import { parseInt } from 'lodash';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
@@ -17,7 +16,6 @@ import webpackConfig from '../webpack.config';
 import knexConfig from '../knexfile';
 import models from './models/index';
 import addRoutes from './routes/index';
-import addSchemas from './schemas/index';
 
 dotenv.config();
 const {
@@ -101,22 +99,12 @@ const registerPlugins = (app) => {
 const addHooks = (app) => {
   app.decorateRequest('currentUser', null);
   app.decorateRequest('signedIn', false);
-  app.decorateRequest('isOwnProfile', false);
 
   app.addHook('preHandler', async (req) => {
     const userId = req.session.get('userId');
-    const isProfile = /^\/users\/\d+/.test(req.url);
     if (userId) {
       req.currentUser = await app.objection.models.user.query().findById(userId);
       req.signedIn = true;
-    }
-    if (isProfile) {
-      const routeId = req
-        .url
-        .match(/\d+$/g)
-        .join('');
-      req.isOwnProfile = parseInt(routeId) === userId;
-      console.log(req.isOwnProfile);
     }
   });
 };
@@ -139,7 +127,6 @@ export default () => {
   setUpViews(app);
   setUpStaticAssets(app);
   addHooks(app);
-  addSchemas(app);
   addRoutes(app);
   return app;
 };

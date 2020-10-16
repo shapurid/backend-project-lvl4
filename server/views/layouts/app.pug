@@ -8,18 +8,25 @@ html
     nav.navbar.navbar-light.navbar-expand-lg.mb-3
       a.navbar-brand(href="/") Менеджер задач
       .collapse.navbar-collapse
-        ul.navbar-nav.mr-auto
+        ul.navbar-nav
           li.nav-item.active
             a.nav-link(href="/users") Пользователи
-        ul.navbar-nav
-          if reply.request.signedIn
+        if reply.request.signedIn
+          ul.navbar-nav
+            li.nav-item.dropdown
+              a.nav-link.dropdown-toggle(href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Задачи
+              .dropdown-menu(aria-labelledby="navbarDropdown")
+                a.dropdown-item(href="#") Список задач
+                a.dropdown-item(href="/taskStatuses") Статусы задач
+          ul.navbar-nav.ml-auto
             li.nav-item.active
               a.nav-link(href=`/users/${reply.request.currentUser.id}`) Личный кабинет
             li.nav-item
               form.form-inline(action='/session' method='post')
                 input(type="hidden" name="_method" value="DELETE")
                 button.btn.btn-outline-danger(type="submit") Выйти
-          else
+        else
+          ul.navbar-nav.ml-auto
             li.nav-item
               a.btn.btn-light.mr-2(href="/session/new") Вход
             li.nav-item

@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      if reply.request.isOwnProfile
+      if reply.request.signedIn && reply.request.currentUser.id === +reply.request.params.id
         form(method='POST' action=`/users/${reply.request.currentUser.id}`)
           .form-group
             label= `Имя: '${firstName}'`
