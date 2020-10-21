@@ -5,12 +5,13 @@ import {
   pickBy,
   assign,
 } from 'lodash';
+import i18next from 'i18next';
 import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
 import encrypt from '../lib/encrypt';
 
 export default (app) => {
   app
-    .get('/users', async (req, reply) => {
+    .get('/users', { name: 'users' }, async (req, reply) => {
       try {
         const users = await app.objection.models.user.query().select('id', 'firstName', 'lastName', 'email');
         reply.render('/users/index', { users });
@@ -33,23 +34,23 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .get('/users/new', (req, reply) => {
+    .get('/users/new', { name: 'newUser' }, (req, reply) => {
       reply.render('/users/new', { errors: {} });
     })
-    .post('/users', async (req, reply) => {
+    .post('/users', { name: 'createUser' }, async (req, reply) => {
       try {
         const user = await app.objection.models.user.fromJson(req.body);
         const foundUser = await app.objection.models.user.query().findOne({ email: user.email });
         if (foundUser) {
           const data = pick(user, ['firstName', 'lastName']);
-          req.flash('danger', 'Пользователь с таким e-mail уже зарегистрирован.');
+          req.flash('danger', i18next.t('flash.users.create.error'));
           reply
             .status(422)
             .render('/users/new', { errors: { email: {}, password: {} }, ...data });
           return reply;
         }
         await app.objection.models.user.query().insert(user);
-        req.flash('success', 'Вы успешно зарегистрированы.');
+        req.flash('success', i18next.t('flash.users.create.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
@@ -70,7 +71,7 @@ export default (app) => {
         const currentUser = await app.objection.models.user.query().findById(sessionId);
         await currentUser.$query().patch(bodyWithoutMethod);
         req.currentUser = currentUser;
-        req.flash('info', 'Профиль успешно обновлён.');
+        req.flash('info', i18next.t('flash.users.modify.info'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
@@ -85,7 +86,7 @@ export default (app) => {
         const sessionId = req.session.get('userId');
         await app.objection.models.user.query().deleteById(sessionId);
         req.session.set('userId', null);
-        req.flash('danger', 'Пользователь удален!');
+        req.flash('info', i18next.t('flash.users.delete.info'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {

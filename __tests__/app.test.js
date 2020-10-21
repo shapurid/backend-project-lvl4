@@ -16,6 +16,7 @@ const getRequests = [
   [200, '/users/new'],
   [200, '/session/new'],
   [200, '/users'],
+  [403, '/taskStatuses'],
   [404, '/wrong-path'],
 ];
 
@@ -118,6 +119,45 @@ test('Task statuses "CRUD"', async () => {
     .set('cookie', sessionCookie);
   expect(deleteTaskStatus.status).toBe(302);
 });
+
+test('Tasks "CRUD"', async () => {
+  const user = generateUser();
+  const creationRes = await request(app.server)
+    .post('/users')
+    .type('form')
+    .send(user);
+  expect(creationRes.status).toBe(302);
+
+  const authorizationRes = await request(app.server)
+    .post('/session')
+    .type('form')
+    .send({ email: user.email, password: user.password });
+  expect(authorizationRes.status).toBe(302);
+
+  const sessionCookie = authorizationRes.headers['set-cookie'];
+
+  const addTaskStatus = await request(app.server)
+    .post('/taskStatuses')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ name: 'Не готово' });
+  expect(addTaskStatus.status).toBe(302);
+
+  const addTask = await request(app.server)
+    .post('/tasks')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ name: 'Задача', taskStatusId: '1' });
+  expect(addTask.status).toBe(302);
+
+  const updTask = await request(app.server)
+    .patch('/tasks/1/edit')
+    .set('cookie', sessionCookie)
+    .type('form')
+    .send({ name: 'Не задача', taskStatusId: '1' });
+  expect(updTask.status).toBe(302);
+});
+
 afterAll(() => {
   app.close();
 });

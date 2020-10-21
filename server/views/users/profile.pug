@@ -7,26 +7,26 @@ block content
       if reply.request.signedIn && reply.request.currentUser.id === +reply.request.params.id
         form(method='POST' action=`/users/${reply.request.currentUser.id}`)
           .form-group
-            label= `Имя: '${firstName}'`
+            label= `${t('views.users.firstName')}: '${firstName}'`
             input.form-control(type='text' name='firstName')
           .form-group
-            label= `Фамилия: '${lastName}'`
+            label= `${t('views.users.lastName')}: '${lastName}'`
             input.form-control(type='text' name='lastName')
           .form-group
-            label= `E-mail: '${email}'`
+            label= `${t('views.users.email')}: '${email}'`
             input.form-control(type='email' name='email')
           .form-group
-            label Новый пароль:
+            label= `${t('views.users.profile.newPassword')}:`
             input.form-control(type='password' name='password' minlength="3")
           input(type="hidden" name="_method" value="patch")
-          button.btn.btn-warning.btn-block(type='submit') Изменить профиль
+          button.btn.btn-warning.btn-block(type='submit')= t('views.users.profile.change')
 
         form(action=`/users/${reply.request.currentUser.id}` method='post').mt-3
           input(type="hidden" name="_method" value="DELETE")
-          button.btn.btn-danger.btn-block(type="submit") Удалить профиль
+          button.btn.btn-danger.btn-block(type="submit")= t('views.users.profile.delete')
       else
         ul.list-group.list-group-flush
-          li.list-group-item= `Имя: ${firstName}`
-          li.list-group-item= `Фамилия: ${lastName}`
-          li.list-group-item= `E-mail: ${email}`
+          li.list-group-item= `${t('views.users.firstName')}: '${firstName}'`
+          li.list-group-item= `${t('views.users.lastName')}: '${lastName}'`
+          li.list-group-item= `${t('views.users.email')}: '${email}'`
     .col

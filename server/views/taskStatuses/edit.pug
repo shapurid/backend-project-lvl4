@@ -6,12 +6,12 @@ block content
     .col-6
       form(method='POST' action=`/taskStatuses/${reply.request.params.id}/edit`)
           .form-group
-            label Введите название статуса задачи:
+            label= `${t('views.taskStatuses.new.name')}:`
             if errors.name
               input.form-control.is-invalid(type='text' name='name')
-              .invalid-feedback Пожалуйста, введите верное имя статуса задачи
+              .invalid-feedback= t('views.taskStatuses.new.error')
             else
               input.form-control(type='text' name='name' value=name)
           input(type="hidden" name="_method" value="patch")
-          button.btn.btn-warning.btn-block(type='submit') Изменить статус задачи
+          button.btn.btn-warning.btn-block(type='submit')= t('views.taskStatuses.edit.button')
     .col

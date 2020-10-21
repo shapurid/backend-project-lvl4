@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { checkSignedIn } from '../lib/preHandlers';
 
 export default (app) => {
@@ -11,18 +12,23 @@ export default (app) => {
         throw new Error(error);
       }
     })
-    .get('/taskStatuses/new', { preHandler: checkSignedIn }, (req, reply) => {
+    .get('/taskStatuses/new', { name: 'newTaskStatus', preHandler: checkSignedIn }, (req, reply) => {
       reply.render('/taskStatuses/new', { errors: {} });
       return reply;
     })
     .get('/taskStatuses/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
-        const taskName = await app.objection.models.taskStatus.query().findById(req.params.id);
-        if (!taskName) {
+        const taskStatusName = await app
+          .objection
+          .models
+          .taskStatus
+          .query()
+          .findById(req.params.id);
+        if (!taskStatusName) {
           reply.notFound();
           return reply;
         }
-        reply.render('/taskStatuses/edit', { errors: {}, ...taskName });
+        reply.render('/taskStatuses/edit', { errors: {}, ...taskStatusName });
         return reply;
       } catch (error) {
         throw new Error(error);
@@ -38,14 +44,14 @@ export default (app) => {
           .query()
           .findOne({ name: status.name });
         if (foundTaskStatus) {
-          req.flash('danger', 'Статус задачи с этим именем уже зарегистрирован');
+          req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
           reply
             .status(422)
             .render('/taskStatuses/new', { errors: req.body });
           return reply;
         }
         await app.objection.models.taskStatus.query().insert(status);
-        req.flash('success', 'Статус задачи успешно зарегистрирован');
+        req.flash('success', i18next.t('flash.taskStatuses.create.success'));
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
       } catch ({ data }) {
@@ -66,7 +72,7 @@ export default (app) => {
         }
         const status = await app.objection.models.taskStatus.query().findById(req.params.id);
         await status.$query().patch({ name });
-        req.flash('info', 'Статус задачи успешно обновлён.');
+        req.flash('info', i18next.t('flash.taskStatuses.modify.info'));
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
       } catch (error) {
@@ -75,8 +81,20 @@ export default (app) => {
     })
     .delete('/taskStatuses/:id', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
-        await app.objection.models.taskStatus.query().deleteById(req.params.id);
-        req.flash('danger', 'Статус задачи удалён!');
+        const normalizedId = Number.parseInt(req.params.id, 10);
+        const relatedTask = await app
+          .objection
+          .models
+          .task
+          .query()
+          .findOne({ taskStatusId: normalizedId });
+        if (relatedTask) {
+          req.flash('danger', i18next.t('flash.taskStatuses.delete.error'));
+          reply.redirect(app.reverse('taskStatuses'));
+          return reply;
+        }
+        await app.objection.models.taskStatus.query().deleteById(normalizedId);
+        req.flash('info', i18next.t('flash.taskStatuses.delete.info'));
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
       } catch (error) {

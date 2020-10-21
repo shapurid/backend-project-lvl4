@@ -8,9 +8,9 @@ block content
         thead.thead-light
           tr
             th(scope="col") #
-            th(scope="col") Имя
-            th(scope="col") Фамилия
-            th(scope="col") E-mail
+            th(scope="col")= t('views.users.firstName')
+            th(scope="col")= t('views.users.lastName')
+            th(scope="col")= t('views.users.email')
             th
         tbody
           - let n = 0
@@ -23,5 +23,5 @@ block content
               td
                if reply.request.signedIn
                 .d-flex
-                  a.btn.btn-outline-info.ml-auto(href=`/users/${user.id}`) Посмотреть профиль
+                  a.btn.btn-outline-info.ml-auto(href=`/users/${user.id}`)= t('views.users.watchProfile')
     .col

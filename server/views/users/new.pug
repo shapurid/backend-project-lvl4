@@ -5,34 +5,34 @@ block content
     .col
     .col-5
       h3.mb-4 Регистрация
-      form(method='POST' action='/users')
+      form(method='POST' action=route('createUser'))
         .form-group
-          label Имя:
+          label= `${t('views.users.firstName')}:`
           if errors.firstName
             input.form-control.is-invalid(type='text' name='firstName')
-            .invalid-feedback Пожалуйста, введите Ваше имя
+            .invalid-feedback= t('views.users.new.errors.firstName')
           else
             input.form-control(type='text' name='firstName' value=firstName)
         .form-group
-          label Фамилия:
+          label= `${t('views.users.lastName')}:`
           if errors.lastName
             input.form-control.is-invalid(type='text' name='lastName')
-            .invalid-feedback Пожалуйста, введите Вашу фамилию
+            .invalid-feedback= t('views.users.new.errors.lastName')
           else
             input.form-control(type='text' name='lastName' value=lastName)
         .form-group
-          label E-mail:
+          label= `${t('views.users.email')}:`
           if errors.email
             input.form-control.is-invalid(type='email' name='email')
-            .invalid-feedback Пожалуйста, введите адрес Вашей эллектронной почты
+            .invalid-feedback= t('views.users.new.errors.email')
           else
             input.form-control(type='email' name='email' value=email)
         .form-group
-          label Пароль:
+          label= `${t('views.users.password')}:`
           if errors.password
             input.form-control.is-invalid(type='password' name='password' minlength="3")
-            .invalid-feedback Введите пароль
+            .invalid-feedback= t('views.users.new.errors.password')
           else
             input.form-control(type='password' name='password' minlength="3")
-        button.btn.btn-warning.btn-block(type='submit') Зарегистрироваться
+        button.btn.btn-warning.btn-block(type='submit')= t('views.users.new.signUp')
     .col
