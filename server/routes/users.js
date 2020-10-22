@@ -11,27 +11,19 @@ import encrypt from '../lib/encrypt';
 export default (app) => {
   app
     .get('/users', { name: 'users' }, async (req, reply) => {
-      try {
-        const users = await app.objection.models.user.query().select('id', 'firstName', 'lastName', 'email');
-        reply.render('/users/index', { users });
-        return reply;
-      } catch (error) {
-        throw new Error(error);
-      }
+      const users = await app.objection.models.user.query().select('id', 'firstName', 'lastName', 'email');
+      reply.render('/users/index', { users });
+      return reply;
     })
     .get('/users/:id', { preHandler: checkSignedIn }, async (req, reply) => {
-      try {
-        const normalizedRouteId = parseInt(req.params.id);
-        const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(normalizedRouteId);
-        if (!user) {
-          reply.notFound();
-          return reply;
-        }
-        reply.render('/users/profile', { ...user, errors: {} });
+      const normalizedRouteId = parseInt(req.params.id);
+      const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(normalizedRouteId);
+      if (!user) {
+        reply.notFound();
         return reply;
-      } catch (error) {
-        throw new Error(error);
       }
+      reply.render('/users/profile', { ...user, errors: {} });
+      return reply;
     })
     .get('/users/new', { name: 'newUser' }, (req, reply) => {
       reply.render('/users/new', { errors: {} });
@@ -81,15 +73,11 @@ export default (app) => {
       }
     })
     .delete('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
-      try {
-        const sessionId = req.session.get('userId');
-        await app.objection.models.user.query().deleteById(sessionId);
-        req.session.set('userId', null);
-        req.flash('success', i18next.t('flash.users.delete.success'));
-        reply.redirect(app.reverse('root'));
-        return reply;
-      } catch (error) {
-        throw new Error(error);
-      }
+      const sessionId = req.session.get('userId');
+      await app.objection.models.user.query().deleteById(sessionId);
+      req.session.set('userId', null);
+      req.flash('success', i18next.t('flash.users.delete.success'));
+      reply.redirect(app.reverse('root'));
+      return reply;
     });
 };

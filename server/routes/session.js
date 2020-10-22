@@ -8,22 +8,18 @@ export default (app) => {
     })
     .post('/session', { name: 'createSession' }, async (req, reply) => {
       const { email, password } = req.body;
-      try {
-        const foundUser = email && await app.objection.models.user.query().findOne({ email });
-        if (!foundUser || (foundUser.passwordDigest !== encrypt(password))) {
-          req.flash('danger', i18next.t('flash.session.create.error'));
-          reply
-            .code(422)
-            .render('/session/new');
-          return reply;
-        }
-        req.session.set('userId', foundUser.id);
-        req.flash('success', i18next.t('flash.session.create.success'));
-        reply.redirect(app.reverse('root'));
+      const foundUser = email && await app.objection.models.user.query().findOne({ email });
+      if (!foundUser || (foundUser.passwordDigest !== encrypt(password))) {
+        req.flash('danger', i18next.t('flash.session.create.error'));
+        reply
+          .code(422)
+          .render('/session/new');
         return reply;
-      } catch (error) {
-        throw new Error(error);
       }
+      req.session.set('userId', foundUser.id);
+      req.flash('success', i18next.t('flash.session.create.success'));
+      reply.redirect(app.reverse('root'));
+      return reply;
     })
     .delete('/session', { name: 'deleteSession' }, (req, reply) => {
       req.session.set('userId', null);
