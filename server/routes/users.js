@@ -3,7 +3,6 @@ import {
   parseInt,
   omit,
   pickBy,
-  assign,
 } from 'lodash';
 import i18next from 'i18next';
 import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
@@ -64,14 +63,14 @@ export default (app) => {
       try {
         const filteredBody = pickBy(req.body, (el) => el.length > 0);
         const { password, ...otherData } = filteredBody;
-        const bodyWithUpdatedPassword = assign(otherData,
-          password ? { passwordDigest: encrypt(password) } : {});
+        const pass = password ? { passwordDigest: encrypt(password) } : {};
+        const bodyWithUpdatedPassword = { ...otherData, ...pass };
         const bodyWithoutMethod = omit(bodyWithUpdatedPassword, '_method');
         const sessionId = req.session.get('userId');
         const currentUser = await app.objection.models.user.query().findById(sessionId);
         await currentUser.$query().patch(bodyWithoutMethod);
         req.currentUser = currentUser;
-        req.flash('info', i18next.t('flash.users.modify.info'));
+        req.flash('success', i18next.t('flash.users.modify.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
@@ -86,7 +85,7 @@ export default (app) => {
         const sessionId = req.session.get('userId');
         await app.objection.models.user.query().deleteById(sessionId);
         req.session.set('userId', null);
-        req.flash('info', i18next.t('flash.users.delete.info'));
+        req.flash('success', i18next.t('flash.users.delete.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch (error) {

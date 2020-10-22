@@ -14,7 +14,7 @@ export default (app) => {
           req.flash('danger', i18next.t('flash.session.create.error'));
           reply
             .code(422)
-            .render('/session/new', { email });
+            .render('/session/new');
           return reply;
         }
         req.session.set('userId', foundUser.id);
@@ -27,7 +27,7 @@ export default (app) => {
     })
     .delete('/session', { name: 'deleteSession' }, (req, reply) => {
       req.session.set('userId', null);
-      req.flash('info', i18next.t('flash.session.delete.info'));
+      req.flash('success', i18next.t('flash.session.delete.success'));
       reply.redirect(app.reverse('root'));
     });
 };

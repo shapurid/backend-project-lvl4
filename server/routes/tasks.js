@@ -1,7 +1,6 @@
 import i18next from 'i18next';
 import {
   omit,
-  assign,
   isEmpty,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
@@ -15,7 +14,6 @@ export default (app) => {
         reply.render('/tasks/index', { tasks });
         return reply;
       } catch (error) {
-        console.log(error);
         throw new Error(error);
       }
     })
@@ -60,7 +58,7 @@ export default (app) => {
     .post('/tasks', { name: 'createTask', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const normalizedBody = normalizeBodyForTask(req.body);
-        const data = assign(normalizedBody, { creatorId: req.currentUser.id });
+        const data = { ...normalizedBody, creatorId: req.currentUser.id };
         const task = await app.objection.models.task.fromJson(data);
         await app.objection.models.task.query().insert(task);
         req.flash('success', i18next.t('flash.tasks.create.success'));

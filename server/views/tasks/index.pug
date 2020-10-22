@@ -31,7 +31,7 @@ block content
                       .d-flex.justify-content-center —
                   td
                     if task.description
-                      button.btn.btn-primary.btn-sm(type="button" data-toggle="collapse" data-target=`#collapse${n}` aria-expanded="false" aria-controls=`collapse${n}`)= t('views.tasks.show')
+                      button.btn.btn-secondary.btn-sm(type="button" data-toggle="collapse" data-target=`#collapse${n}` aria-expanded="false" aria-controls=`collapse${n}`)= t('views.tasks.show')
                     else
                       .d-flex.justify-content-center —
                   td
@@ -39,8 +39,8 @@ block content
                       if reply.request.currentUser.id === task.creatorId
                         form.form-inline(action=`/tasks/u${task.creatorId}/${task.id}` method='post')
                           input(type="hidden" name="_method" value="DELETE")
-                          button.btn.btn-danger(type="submit")= t('views.tasks.delete')
-                      a.btn.btn-outline-info.ml-2(href=`/tasks/${task.id}/edit`)= t('views.tasks.edit.button')
+                          button.btn.btn-danger.btn-sm(type="submit")= t('views.tasks.delete')
+                      a.btn.btn-outline-info.ml-2.btn-sm(href=`/tasks/${task.id}/edit`)= t('views.tasks.edit.button')
                 tr
                   if task.description
                     td.collapse(id=`collapse${n}` colspan="7")= task.description
