@@ -1,10 +1,10 @@
 import i18next from 'i18next';
 import {
-  omit,
+  pickBy,
   isEmpty,
+  mapValues,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
-import normalizeBodyForTask from '../lib/normalizeBodyForTask';
 
 export default (app) => {
   app
@@ -44,7 +44,14 @@ export default (app) => {
     })
     .post('/tasks', { name: 'createTask', preHandler: checkSignedIn }, async (req, reply) => {
       try {
-        const normalizedBody = normalizeBodyForTask(req.body);
+        const filteredBody = pickBy(req.body);
+        const normalizedBody = mapValues(filteredBody, (el) => {
+          const transformedValue = Number.parseInt(el, 10);
+          if (Number.isNaN(transformedValue)) {
+            return el;
+          }
+          return transformedValue;
+        });
         const data = { ...normalizedBody, creatorId: req.currentUser.id };
         const task = await app.objection.models.task.fromJson(data);
         await app.objection.models.task.query().insert(task);
@@ -69,8 +76,15 @@ export default (app) => {
     })
     .patch('/tasks/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
-        const bodyWithoutMethod = omit(req.body, '_method');
-        const normalizedBody = normalizeBodyForTask(bodyWithoutMethod);
+        const { _method, ...body } = req.body;
+        const normalizedEmptyStringsBody = mapValues(body, (el) => el || null);
+        const normalizedBody = mapValues(normalizedEmptyStringsBody, (el) => {
+          const transformedValue = Number.parseInt(el, 10);
+          if (Number.isNaN(transformedValue)) {
+            return el;
+          }
+          return transformedValue;
+        });
         const currentTask = await app.objection.models.task.query().findById(req.params.id);
         await currentTask.$query().patch(normalizedBody);
         req.flash('info', i18next.t('flash.tasks.modify.info'));

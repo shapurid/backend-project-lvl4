@@ -1,7 +1,6 @@
 import {
   pick,
   parseInt,
-  omit,
   pickBy,
 } from 'lodash';
 import i18next from 'i18next';
@@ -53,14 +52,14 @@ export default (app) => {
     })
     .patch('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
       try {
-        const filteredBody = pickBy(req.body, (el) => el.length > 0);
+        const { _method, ...body } = req.body;
+        const filteredBody = pickBy(body, (el) => el.length > 0);
         const { password, ...otherData } = filteredBody;
         const pass = password ? { passwordDigest: encrypt(password) } : {};
         const bodyWithUpdatedPassword = { ...otherData, ...pass };
-        const bodyWithoutMethod = omit(bodyWithUpdatedPassword, '_method');
         const sessionId = req.session.get('userId');
         const currentUser = await app.objection.models.user.query().findById(sessionId);
-        await currentUser.$query().patch(bodyWithoutMethod);
+        await currentUser.$query().patch(bodyWithUpdatedPassword);
         req.currentUser = currentUser;
         req.flash('success', i18next.t('flash.users.modify.success'));
         reply.redirect(app.reverse('root'));
