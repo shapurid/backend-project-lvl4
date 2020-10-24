@@ -8,7 +8,7 @@ block content
           thead.thead-light
             tr
               th(scope="col") #
-              th(scope="col") Имя статуса
+              th(scope="col")= t('views.taskStatuses.name')
               th
           if statusList.length > 0
            tbody
@@ -19,9 +19,9 @@ block content
                 td= taskStatus.name
                 td
                   .d-flex.justify-content-end
-                      a.btn.btn-outline-info.mr-2(href=`/taskStatuses/${taskStatus.id}/edit`) Изменить
+                      a.btn.btn-outline-info.mr-2(href=`/taskStatuses/${taskStatus.id}/edit`)= t('views.taskStatuses.rename')
                       form.form-inline(action=`/taskStatuses/${taskStatus.id}` method='post')
                         input(type="hidden" name="_method" value="DELETE")
-                        button.btn.btn-danger(type="submit") Удалить
-        a.btn.btn-dark.btn-block(href="/taskStatuses/new") Добавить статус
+                        button.btn.btn-danger(type="submit")= t('views.taskStatuses.delete')
+        a.btn.btn-dark.btn-block(href=route('newTaskStatus'))= t('views.taskStatuses.add')
     .col

@@ -12,6 +12,9 @@ import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
+import i18next from 'i18next';
+import getHelpers from './helpers/index';
+import ru from './locales/ru';
 import webpackConfig from '../webpack.config';
 import knexConfig from '../knexfile';
 import models from './models/index';
@@ -46,12 +49,14 @@ const setUpViews = (app) => {
   const { devServer: { host, port } } = webpackConfig;
   const devHost = `http://${host}:${port}`;
   const domain = isDevelopment ? devHost : '';
+  const helpers = getHelpers(app);
   app.register(pointOfView, {
     engine: {
       pug: Pug,
     },
     includeViewExtension: true,
     defaultContext: {
+      ...helpers,
       assetsPath: (filename) => `${domain}/assets/${filename}`,
     },
     root: path.join(__dirname, '..', 'server', 'views'),
@@ -76,6 +81,16 @@ const setUpErrorHandlers = (app) => {
       return reply;
     }));
 };
+
+const setupLocalization = () => i18next
+  .init({
+    lng: 'ru',
+    fallbackLng: 'en',
+    debug: isDevelopment,
+    resources: {
+      ru,
+    },
+  });
 
 const registerPlugins = (app) => {
   app.register(fastifyObjectionjs, {
@@ -124,6 +139,7 @@ export default () => {
   });
   registerPlugins(app);
   setUpErrorHandlers(app);
+  setupLocalization();
   setUpViews(app);
   setUpStaticAssets(app);
   addHooks(app);

@@ -4,13 +4,13 @@ block content
   .row
     .col
     .col-5
-      h3.mb-4 Вход
-      form(action='/session' method='post')
+      h3.mb-4= t('views.session.new.signIn')
+      form(action=route('createSession') method='post')
         .form-group
           label E-mail:
-          input.form-control(type='email' name='email' value=email)
+          input.form-control(type='email' name='email')
         .form-group
           label Пароль:
           input.form-control(type='password' name='password' minlength="3")
-        button.btn.btn-info.btn-block(type='submit') Войти
+        button.btn.btn-info.btn-block(type='submit')= t('views.session.new.submit')
     .col
