@@ -9,7 +9,7 @@ import encrypt from '../lib/encrypt';
 
 export default (app) => {
   app
-    .get('/users', { name: 'users' }, async (req, reply) => {
+    .get('/users', { name: 'users', preHandler: checkSignedIn }, async (req, reply) => {
       const users = await app.objection.models.user.query().select('id', 'firstName', 'lastName', 'email');
       reply.render('/users/index', { users });
       return reply;

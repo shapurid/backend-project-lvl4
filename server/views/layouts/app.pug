@@ -8,16 +8,17 @@ html
     nav.navbar.navbar-light.navbar-expand-lg.mb-3
       a.navbar-brand(href=route('root'))= t('appName')
       .collapse.navbar-collapse
-        ul.navbar-nav
-          li.nav-item.active
-            a.nav-link(href=route('users'))= t('layouts.app.users')
         if reply.request.signedIn
+          ul.navbar-nav
+            li.nav-item.active
+              a.nav-link(href=route('users'))= t('layouts.app.users')
           ul.navbar-nav
             li.nav-item.dropdown
               a.nav-link.dropdown-toggle(href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Задачи
               .dropdown-menu(aria-labelledby="navbarDropdown")
                 a.dropdown-item(href=route('tasks'))= t('layouts.app.tasks')
                 a.dropdown-item(href=route('taskStatuses'))= t('layouts.app.taskStatuses')
+                a.dropdown-item(href=route('labels'))= t('layouts.app.labels')
           ul.navbar-nav.ml-auto
             li.nav-item.active
               a.nav-link(href=`/users/${reply.request.currentUser.id}`)= t('layouts.app.own')

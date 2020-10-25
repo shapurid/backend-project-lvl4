@@ -4,14 +4,14 @@ block content
   .row
     .col
     .col-6
-      form(method="post" action=`/taskStatuses/${reply.request.params.id}/edit`)
+      form(method="post" action=`/labels/${reply.request.params.id}/edit`)
           .form-group
-            label= `${t('views.taskStatuses.new.name')}:`
+            label= `${t('views.labels.edit.name')}:`
             if errors.name
               input.form-control.is-invalid(type="text" name="name")
-              .invalid-feedback= t('views.taskStatuses.new.error')
+              .invalid-feedback= t('views.labels.edit.errors.name')
             else
               input.form-control(type="text" name="name" value=name)
           input(type="hidden" name="_method" value="patch")
-          button.btn.btn-warning.btn-block(type="submit")= t('views.taskStatuses.edit.button')
+          button.btn.btn-warning.btn-block(type="submit")= t('views.labels.edit.add')
     .col

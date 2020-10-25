@@ -34,7 +34,7 @@ export default (app) => {
           .models
           .taskStatus
           .query()
-          .findOne({ name: status.name });
+          .findOne(status);
         if (foundTaskStatus) {
           req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
           reply
@@ -63,7 +63,7 @@ export default (app) => {
       }
       const status = await app.objection.models.taskStatus.query().findById(req.params.id);
       await status.$query().patch({ name });
-      req.flash('info', i18next.t('flash.taskStatuses.modify.info'));
+      req.flash('success', i18next.t('flash.taskStatuses.modify.success'));
       reply.redirect(app.reverse('taskStatuses'));
       return reply;
     })
@@ -81,7 +81,7 @@ export default (app) => {
         return reply;
       }
       await app.objection.models.taskStatus.query().deleteById(normalizedId);
-      req.flash('info', i18next.t('flash.taskStatuses.delete.info'));
+      req.flash('success', i18next.t('flash.taskStatuses.delete.success'));
       reply.redirect(app.reverse('taskStatuses'));
       return reply;
     });
