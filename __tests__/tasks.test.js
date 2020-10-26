@@ -1,28 +1,23 @@
-import {
-  beforeAll,
-  afterAll,
-  describe,
-  expect,
-  test,
-} from '@jest/globals';
 import request from 'supertest';
-import faker from 'faker';
 import getApp from '../server';
-import { registerTestUser, createTestTaskStatus, createTestLabel } from './helpers';
+import {
+  mapData,
+  prepareApp,
+  closeApp,
+  registerTestUser,
+  createTestTaskStatus,
+  createTestLabel,
+} from './helpers';
 
 let app;
 let mainTestUser;
 let auxiliaryTestUser;
 let testLabel;
 let testTaskStatus;
+const data = mapData(__filename);
 
 beforeAll(async () => {
-  app = await getApp().ready();
-  await app
-    .objection
-    .knex
-    .migrate
-    .latest();
+  app = await prepareApp(getApp);
   mainTestUser = await registerTestUser(app);
   [
     auxiliaryTestUser,
@@ -38,7 +33,7 @@ beforeAll(async () => {
 describe('Test tasks CRUD', () => {
   let testTask;
   test('Create new task', async () => {
-    const name = faker.lorem.word();
+    const { name } = data.create;
     const res = await request(app.server)
       .post('/tasks')
       .set('cookie', mainTestUser.sessionCookie)
@@ -104,9 +99,5 @@ describe('Test tasks CRUD', () => {
 });
 
 afterAll(async () => {
-  await app
-    .objection
-    .knex
-    .destroy();
-  await app.close();
+  await closeApp(app);
 });

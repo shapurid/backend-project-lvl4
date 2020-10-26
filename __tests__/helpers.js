@@ -1,16 +1,38 @@
-import { expect } from '@jest/globals';
-import faker from 'faker';
+import { parse } from 'path';
 import request from 'supertest';
+import faker from 'faker';
+import generatedData from './__fixtures__/generatedData';
 
-export const generateUserData = () => ({
-  firstName: faker.name.firstName(),
-  lastName: faker.name.lastName(),
-  email: faker.internet.email(),
-  password: faker.internet.password(),
-});
+export const mapData = (filepath) => {
+  const parsedData = parse(filepath);
+  return generatedData[parsedData.name];
+};
+
+export const prepareApp = async (appGetter) => {
+  const app = await appGetter().ready();
+  await app
+    .objection
+    .knex
+    .migrate
+    .latest();
+  return app;
+};
+
+export const closeApp = async (app) => {
+  await app
+    .objection
+    .knex
+    .destroy();
+  await app.close();
+};
 
 export const registerTestUser = async (app) => {
-  const user = generateUserData();
+  const user = {
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName(),
+    email: faker.internet.email(),
+    password: faker.internet.password(),
+  };
   const creationRes = await request(app.server)
     .post('/users')
     .type('form')
@@ -53,20 +75,20 @@ export const createTestTaskStatus = async (app, sessionCookie) => {
 };
 
 export const createTestTask = async (app, sessionCookie, taskStatusId) => {
-  const nameOfTask = faker.lorem.word();
-  const addTask = await request(app.server)
+  const name = faker.lorem.word();
+  const res = await request(app.server)
     .post('/tasks')
     .set('cookie', sessionCookie)
     .type('form')
-    .send({ name: nameOfTask, taskStatusId });
-  expect(addTask.status).toBe(302);
+    .send({ name, taskStatusId });
+  expect(res.status).toBe(302);
 
   const task = await app
     .objection
     .models
     .task
     .query()
-    .findOne({ name: nameOfTask });
+    .findOne({ name });
   return task;
 };
 

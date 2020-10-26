@@ -1,26 +1,25 @@
-import { describe, expect, test } from '@jest/globals';
 import request from 'supertest';
-import faker from 'faker';
 import getApp from '../server';
-import { registerTestUser } from './helpers';
+import {
+  mapData,
+  prepareApp,
+  closeApp,
+  registerTestUser,
+} from './helpers';
 
 let app;
 let testUser;
+const data = mapData(__filename);
 
 beforeAll(async () => {
-  app = await getApp().ready();
-  await app
-    .objection
-    .knex
-    .migrate
-    .latest();
+  app = await prepareApp(getApp);
   testUser = await registerTestUser(app);
 });
 
 describe('Task statuses CRUD', () => {
   let testTaskStatus;
   test('Create new task status', async () => {
-    const name = faker.lorem.word();
+    const { name } = data.create;
     const res = await request(app.server)
       .post('/taskStatuses')
       .set('cookie', testUser.sessionCookie)
@@ -42,12 +41,12 @@ describe('Task statuses CRUD', () => {
     expect(res.status).toBe(200);
   });
   test('Update task status', async () => {
-    const newName = faker.lorem.word();
+    const { name } = data.update;
     const res = await request(app.server)
       .patch(`/taskStatuses/${testTaskStatus.id}/edit`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name: newName });
+      .send({ name });
     expect(res.status).toBe(302);
 
     const newTaskStatusData = await app
@@ -55,7 +54,7 @@ describe('Task statuses CRUD', () => {
       .models
       .taskStatus
       .query()
-      .findOne({ name: newName });
+      .findOne({ name });
 
     expect(testTaskStatus.id).toBe(newTaskStatusData.id);
     expect(testTaskStatus.name).not.toBe(newTaskStatusData.name);
@@ -70,9 +69,5 @@ describe('Task statuses CRUD', () => {
 });
 
 afterAll(async () => {
-  await app
-    .objection
-    .knex
-    .destroy();
-  await app.close();
+  await closeApp(app);
 });

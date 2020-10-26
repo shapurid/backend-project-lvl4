@@ -1,11 +1,12 @@
 {
   "name": "shapurid-taskmanager",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "",
   "main": "",
   "jest": {
     "modulePathIgnorePatterns": [
-      "<rootDir>/__tests__/helpers"
+      "<rootDir>/__tests__/helpers",
+      "<rootDir>/__tests__/__fixtures__"
     ]
   },
   "scripts": {

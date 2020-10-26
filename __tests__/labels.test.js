@@ -1,32 +1,27 @@
-import {
-  beforeAll,
-  afterAll,
-  describe,
-  expect,
-  test,
-} from '@jest/globals';
+import { expect } from '@jest/globals';
 import request from 'supertest';
-import faker from 'faker';
 import getApp from '../server';
-import { registerTestUser } from './helpers';
+import Label from '../server/models/Label';
+import {
+  mapData,
+  prepareApp,
+  closeApp,
+  registerTestUser,
+} from './helpers';
 
 let app;
 let testUser;
+const data = mapData(__filename);
 
 beforeAll(async () => {
-  app = await getApp().ready();
-  await app
-    .objection
-    .knex
-    .migrate
-    .latest();
+  app = await prepareApp(getApp);
   testUser = await registerTestUser(app);
 });
 
 describe('Labels CRUD', () => {
   let testLabel;
   test('Create new label', async () => {
-    const name = faker.lorem.word();
+    const { name } = data.create;
     const res = await request(app.server)
       .post('/labels')
       .set('cookie', testUser.sessionCookie)
@@ -40,6 +35,7 @@ describe('Labels CRUD', () => {
       .label
       .query()
       .findOne({ name });
+    expect(testLabel).toBeInstanceOf(Label);
   });
   test('Read labels', async () => {
     const res = await request(app.server)
@@ -48,12 +44,12 @@ describe('Labels CRUD', () => {
     expect(res.status).toBe(200);
   });
   test('Update label', async () => {
-    const newName = faker.lorem.word();
+    const { name } = data.update;
     const res = await request(app.server)
       .patch(`/labels/${testLabel.id}/edit`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name: newName });
+      .send({ name });
     expect(res.status).toBe(302);
 
     const newTestLabelData = await app
@@ -61,7 +57,7 @@ describe('Labels CRUD', () => {
       .models
       .label
       .query()
-      .findOne({ name: newName });
+      .findOne({ name });
 
     expect(testLabel.id).toBe(newTestLabelData.id);
     expect(testLabel.name).not.toBe(newTestLabelData.name);
@@ -76,9 +72,5 @@ describe('Labels CRUD', () => {
 });
 
 afterAll(async () => {
-  await app
-    .objection
-    .knex
-    .destroy();
-  await app.close();
+  await closeApp(app);
 });

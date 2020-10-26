@@ -1,8 +1,4 @@
-import {
-  pick,
-  parseInt,
-  pickBy,
-} from 'lodash';
+import { pickBy } from 'lodash';
 import i18next from 'i18next';
 import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
 import encrypt from '../lib/encrypt';
@@ -15,8 +11,7 @@ export default (app) => {
       return reply;
     })
     .get('/users/:id', { preHandler: checkSignedIn }, async (req, reply) => {
-      const normalizedRouteId = parseInt(req.params.id);
-      const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(normalizedRouteId);
+      const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(req.params.id);
       if (!user) {
         reply.notFound();
         return reply;
@@ -30,20 +25,17 @@ export default (app) => {
     .post('/users', { name: 'createUser' }, async (req, reply) => {
       try {
         const user = await app.objection.models.user.fromJson(req.body);
-        const foundUser = await app.objection.models.user.query().findOne({ email: user.email });
-        if (foundUser) {
-          const data = pick(user, ['firstName', 'lastName']);
-          req.flash('danger', i18next.t('flash.users.create.error'));
-          reply
-            .status(422)
-            .render('/users/new', { errors: { email: {}, password: {} }, ...data });
-          return reply;
-        }
         await app.objection.models.user.query().insert(user);
         req.flash('success', i18next.t('flash.users.create.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
+        const isEmailUniqErr = data.email
+          ? data.email.some((el) => el.keyword === 'unique')
+          : false;
+        if (isEmailUniqErr) {
+          req.flash('danger', i18next.t('flash.users.create.error'));
+        }
         reply
           .code(422)
           .render('users/new', { errors: data, ...req.body });
@@ -73,6 +65,14 @@ export default (app) => {
     })
     .delete('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
       const sessionId = req.session.get('userId');
+      const tasks = await app.objection.models.task.query();
+      const isCreatorOrExecutor = tasks
+        .some(({ creatorId, executorId }) => creatorId === sessionId || executorId === sessionId);
+      if (isCreatorOrExecutor) {
+        req.flash('danger', i18next.t('flash.users.delete.error'));
+        reply.redirect(app.reverse('tasks'));
+        return reply;
+      }
       await app.objection.models.user.query().deleteById(sessionId);
       req.session.set('userId', null);
       req.flash('success', i18next.t('flash.users.delete.success'));

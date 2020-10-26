@@ -1,6 +1,6 @@
 exports.up = (knex) => knex.schema.createTable('labels', (table) => {
   table.increments('id').primary();
-  table.string('name');
+  table.string('name').unique().notNullable();
   table.timestamps(true, true);
 });
 

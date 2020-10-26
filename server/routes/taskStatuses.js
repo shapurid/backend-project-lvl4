@@ -29,24 +29,17 @@ export default (app) => {
     .post('/taskStatuses', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const status = await app.objection.models.taskStatus.fromJson(req.body);
-        const foundTaskStatus = await app
-          .objection
-          .models
-          .taskStatus
-          .query()
-          .findOne(status);
-        if (foundTaskStatus) {
-          req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
-          reply
-            .status(422)
-            .render('/taskStatuses/new', { errors: req.body });
-          return reply;
-        }
         await app.objection.models.taskStatus.query().insert(status);
         req.flash('success', i18next.t('flash.taskStatuses.create.success'));
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
       } catch ({ data }) {
+        const isNameUniqErr = data.name
+          ? data.name.some((el) => el.keyword === 'unique')
+          : false;
+        if (isNameUniqErr) {
+          req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
+        }
         reply
           .code(422)
           .render('/taskStatuses/new', { errors: data });

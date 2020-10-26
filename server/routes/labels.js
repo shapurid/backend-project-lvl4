@@ -15,24 +15,17 @@ export default (app) => {
     .post('/labels', { preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const tag = await app.objection.models.label.fromJson(req.body);
-        const foundLabel = await app
-          .objection
-          .models
-          .label
-          .query()
-          .findOne(tag);
-        if (foundLabel) {
-          req.flash('danger', i18next.t('flash.labels.create.error'));
-          reply
-            .code(422)
-            .render('/labels/new', { errors: req.body });
-          return reply;
-        }
         await app.objection.models.label.query().insert(tag);
         req.flash('success', i18next.t('flash.labels.create.success'));
         reply.redirect(app.reverse('labels'));
         return reply;
       } catch ({ data }) {
+        const isNameUniqErr = data.name
+          ? data.name.some((el) => el.keyword === 'unique')
+          : false;
+        if (isNameUniqErr) {
+          req.flash('danger', i18next.t('flash.labels.create.error'));
+        }
         reply
           .code(422)
           .render('/labels/new', { errors: data });
@@ -54,21 +47,31 @@ export default (app) => {
       return reply;
     })
     .patch('/labels/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
-      const { name } = req.body;
-      if (!name) {
+      try {
+        const newData = await app.objection.models.label.fromJson(req.body);
+        const tag = await app.objection.models.label.query().findById(req.params.id);
+        await tag.$query().patch(newData);
+        req.flash('success', i18next.t('flash.labels.modify.success'));
+        reply.redirect(app.reverse('labels'));
+        return reply;
+      } catch ({ data }) {
+        const isNameUniqErr = data.name
+          ? data.name.some((el) => el.keyword === 'unique')
+          : false;
+        if (isNameUniqErr) {
+          req.flash('danger', i18next.t('flash.labels.modify.error'));
+        }
         reply
           .code(422)
-          .render('/labels/edit', { errors: { name: {} } });
+          .render('/labels/edit', { errors: data });
         return reply;
       }
-      const tag = await app.objection.models.label.query().findById(req.params.id);
-      await tag.$query().patch({ name });
-      req.flash('success', i18next.t('flash.labels.modify.success'));
-      reply.redirect(app.reverse('labels'));
-      return reply;
     })
     .delete('/labels/:id', { preHandler: checkSignedIn }, async (req, reply) => {
-      await app.objection.models.label.query().deleteById(req.params.id);
+      await Promise.all([
+        app.objection.models.label.query().deleteById(req.params.id),
+        app.objection.models.taskLabel.query().delete().where('labelId', req.params.id),
+      ]);
       req.flash('success', i18next.t('flash.labels.delete.success'));
       reply.redirect(app.reverse('labels'));
       return reply;

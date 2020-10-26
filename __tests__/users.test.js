@@ -1,28 +1,56 @@
-import {
-  beforeAll,
-  afterAll,
-  describe,
-  expect,
-  test,
-} from '@jest/globals';
 import request from 'supertest';
 import getApp from '../server';
-import { registerTestUser, generateUserData } from './helpers';
+import {
+  mapData,
+  prepareApp,
+  closeApp,
+  registerTestUser,
+  createTestTaskStatus,
+} from './helpers';
 
 let app;
+let testUserForAuth;
+const data = mapData(__filename);
+const guestGetRequests = [
+  [200, '/'],
+  [200, '/users/new'],
+  [200, '/session/new'],
+  [403, '/users'],
+  [403, '/taskStatuses'],
+  [403, '/taskStatuses/new'],
+  [403, '/tasks'],
+  [403, '/tasks/new'],
+  [403, '/labels'],
+  [403, '/labels/new'],
+  [404, '/wrong-path'],
+];
+const authUserGetRequests = guestGetRequests
+  .map(([status, path]) => (status === 403 ? [200, path] : [status, path]));
 
 beforeAll(async () => {
-  app = await getApp().ready();
-  await app
-    .objection
-    .knex
-    .migrate
-    .latest();
+  app = await prepareApp(getApp);
+  testUserForAuth = await registerTestUser(app);
+  await createTestTaskStatus(app, testUserForAuth.sessionCookie);
 });
 
+describe('Authorisation tests', () => {
+  describe('Guest requests', () => {
+    test.each(guestGetRequests)('Guest GET %d %p', async (expectedStatus, route) => {
+      const res = await request(app.server).get(route);
+      expect(res.status).toBe(expectedStatus);
+    });
+  });
+  describe('Authorized user requests', () => {
+    test.each(authUserGetRequests)('Authorized user GET %d %p', async (expectedStatus, route) => {
+      const res = await request(app.server)
+        .get(route)
+        .set('cookie', testUserForAuth.sessionCookie);
+      expect(res.status).toBe(expectedStatus);
+    });
+  });
+});
 describe('User "CRUD"', () => {
-  const testUser = { data: generateUserData() };
-  let updatedTestUser;
+  let testUser = data.user;
   test('Create new user', async () => {
     const res = await request(app.server)
       .post('/users')
@@ -54,12 +82,12 @@ describe('User "CRUD"', () => {
     expect(res.status).toBe(200);
   });
   test('User change yourself', async () => {
-    const { password: newPassword, ...updationData } = generateUserData();
+    const { password: newPassword, ...otherUpdationData } = data.updationData;
     const res = await request(app.server)
       .patch(`/users/${testUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ password: newPassword, ...updationData });
+      .send({ password: newPassword, ...otherUpdationData });
     expect(res.status).toBe(302);
 
     const { passwordDigest, id, ...newData } = await app
@@ -71,17 +99,17 @@ describe('User "CRUD"', () => {
     const { password, id: testUserId, ...oldData } = testUser.data;
 
     expect(newData).not.toEqual(oldData);
-    expect(newData).toEqual(updationData);
+    expect(newData).toEqual(otherUpdationData);
     const sessionCookie = res
       .headers['set-cookie']
       .join()
       .split(';')
       .slice(0, 1)
       .join();
-    updatedTestUser = {
+    testUser = {
       data: {
         id: testUserId,
-        ...updationData,
+        ...otherUpdationData,
         password: newPassword,
       },
       sessionCookie,
@@ -90,11 +118,11 @@ describe('User "CRUD"', () => {
   test('Delete session', async () => {
     const res = await request(app.server)
       .delete('/session')
-      .set('cookie', updatedTestUser.sessionCookie);
+      .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(302);
   });
   test('User authorization with upd data', async () => {
-    const { email, password } = updatedTestUser.data;
+    const { email, password } = testUser.data;
     const res = await request(app.server)
       .post('/session')
       .type('form')
@@ -103,26 +131,22 @@ describe('User "CRUD"', () => {
   });
   test('User change other user error', async () => {
     const otherUser = await registerTestUser(app);
-    const data = generateUserData();
+    const { newData } = data;
     const res = await request(app.server)
       .patch(`/users/${otherUser.data.id}`)
-      .set('cookie', updatedTestUser.sessionCookie)
+      .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ ...data });
+      .send({ ...newData });
     expect(res.status).toBe(403);
   });
   test('User delete', async () => {
     const res = await request(app.server)
-      .delete(`/users/${updatedTestUser.data.id}`)
-      .set('cookie', updatedTestUser.sessionCookie);
+      .delete(`/users/${testUser.data.id}`)
+      .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(302);
   });
 });
 
 afterAll(async () => {
-  await app
-    .objection
-    .knex
-    .destroy();
-  await app.close();
+  await closeApp(app);
 });

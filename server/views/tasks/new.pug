@@ -30,7 +30,7 @@ block content
               else
                 option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
         .form-group
-          label= `${t('views.tasks.description')}:`
+          label= `${t('views.tasks.new.description')}:`
           textarea.form-control(type='text' name="description" rows='3')= currentTask.description
         if labels
           .form-group

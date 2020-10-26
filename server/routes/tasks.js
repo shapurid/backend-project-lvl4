@@ -158,8 +158,10 @@ export default (app) => {
       }
     })
     .delete('/tasks/u:creatorId/:id', { preHandler: checkTaskOwnership }, async (req, reply) => {
-      const normalizedId = Number.parseInt(req.params.id, 10);
-      await app.objection.models.task.query().deleteById(normalizedId);
+      await Promise.all([
+        app.objection.models.task.query().deleteById(req.params.id),
+        app.objection.models.taskLabel.query().delete().where('taskId', req.params.id),
+      ]);
       req.flash('success', i18next.t('flash.tasks.delete.success'));
       reply.redirect(app.reverse('tasks'));
       return reply;
