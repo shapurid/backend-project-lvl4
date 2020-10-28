@@ -1,16 +1,16 @@
 import request from 'supertest';
 import getApp from '../server';
 import {
-  mapData,
-  prepareApp,
-  closeApp,
+  getTestData,
+  setApp,
+  unsetApp,
   registerTestUser,
   createTestTaskStatus,
 } from './helpers';
 
 let app;
 let testUserForAuth;
-const data = mapData(__filename);
+const data = getTestData('users');
 const guestGetRequests = [
   [200, '/'],
   [200, '/users/new'],
@@ -28,7 +28,7 @@ const authUserGetRequests = guestGetRequests
   .map(([status, path]) => (status === 403 ? [200, path] : [status, path]));
 
 beforeAll(async () => {
-  app = await prepareApp(getApp);
+  app = await setApp(getApp);
   testUserForAuth = await registerTestUser(app);
   await createTestTaskStatus(app, testUserForAuth.sessionCookie);
 });
@@ -82,12 +82,12 @@ describe('User "CRUD"', () => {
     expect(res.status).toBe(200);
   });
   test('User change yourself', async () => {
-    const { password: newPassword, ...otherUpdationData } = data.updationData;
+    const { password: newPassword, ...otherDataToUpdate } = data.dataToUpdate;
     const res = await request(app.server)
       .patch(`/users/${testUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ password: newPassword, ...otherUpdationData });
+      .send({ password: newPassword, ...otherDataToUpdate });
     expect(res.status).toBe(302);
 
     const { passwordDigest, id, ...newData } = await app
@@ -99,7 +99,7 @@ describe('User "CRUD"', () => {
     const { password, id: testUserId, ...oldData } = testUser.data;
 
     expect(newData).not.toEqual(oldData);
-    expect(newData).toEqual(otherUpdationData);
+    expect(newData).toEqual(otherDataToUpdate);
     const sessionCookie = res
       .headers['set-cookie']
       .join()
@@ -109,7 +109,7 @@ describe('User "CRUD"', () => {
     testUser = {
       data: {
         id: testUserId,
-        ...otherUpdationData,
+        ...otherDataToUpdate,
         password: newPassword,
       },
       sessionCookie,
@@ -148,5 +148,5 @@ describe('User "CRUD"', () => {
 });
 
 afterAll(async () => {
-  await closeApp(app);
+  await unsetApp(app);
 });

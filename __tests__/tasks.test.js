@@ -1,9 +1,9 @@
 import request from 'supertest';
 import getApp from '../server';
 import {
-  mapData,
-  prepareApp,
-  closeApp,
+  getTestData,
+  setApp,
+  unsetApp,
   registerTestUser,
   createTestTaskStatus,
   createTestLabel,
@@ -14,10 +14,10 @@ let mainTestUser;
 let auxiliaryTestUser;
 let testLabel;
 let testTaskStatus;
-const data = mapData(__filename);
+const data = getTestData('tasks');
 
 beforeAll(async () => {
-  app = await prepareApp(getApp);
+  app = await setApp(getApp);
   mainTestUser = await registerTestUser(app);
   [
     auxiliaryTestUser,
@@ -61,7 +61,7 @@ describe('Test tasks CRUD', () => {
       .set('cookie', mainTestUser.sessionCookie);
     expect(res.status).toBe(200);
   });
-  test('Update task err', async () => {
+  test('Update task error', async () => {
     const res = await request(app.server)
       .patch(`/tasks/${testTask.id}/edit`)
       .type('form')
@@ -99,5 +99,5 @@ describe('Test tasks CRUD', () => {
 });
 
 afterAll(async () => {
-  await closeApp(app);
+  await unsetApp(app);
 });

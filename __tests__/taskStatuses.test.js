@@ -1,18 +1,18 @@
 import request from 'supertest';
 import getApp from '../server';
 import {
-  mapData,
-  prepareApp,
-  closeApp,
+  getTestData,
+  setApp,
+  unsetApp,
   registerTestUser,
 } from './helpers';
 
 let app;
 let testUser;
-const data = mapData(__filename);
+const data = getTestData('taskStatuses');
 
 beforeAll(async () => {
-  app = await prepareApp(getApp);
+  app = await setApp(getApp);
   testUser = await registerTestUser(app);
 });
 
@@ -69,5 +69,5 @@ describe('Task statuses CRUD', () => {
 });
 
 afterAll(async () => {
-  await closeApp(app);
+  await unsetApp(app);
 });

@@ -1,14 +1,11 @@
-import { parse } from 'path';
 import request from 'supertest';
-import faker from 'faker';
-import generatedData from './__fixtures__/generatedData';
+import generateUserData from './__fixtures__/generateUserData';
+import generateName from './__fixtures__/generateName';
+import testData from './__fixtures__/testData';
 
-export const mapData = (filepath) => {
-  const parsedData = parse(filepath);
-  return generatedData[parsedData.name];
-};
+export const getTestData = (key) => testData[key];
 
-export const prepareApp = async (appGetter) => {
+export const setApp = async (appGetter) => {
   const app = await appGetter().ready();
   await app
     .objection
@@ -18,7 +15,7 @@ export const prepareApp = async (appGetter) => {
   return app;
 };
 
-export const closeApp = async (app) => {
+export const unsetApp = async (app) => {
   await app
     .objection
     .knex
@@ -27,12 +24,7 @@ export const closeApp = async (app) => {
 };
 
 export const registerTestUser = async (app) => {
-  const user = {
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
-    email: faker.internet.email(),
-    password: faker.internet.password(),
-  };
+  const user = generateUserData();
   const creationRes = await request(app.server)
     .post('/users')
     .type('form')
@@ -57,7 +49,7 @@ export const registerTestUser = async (app) => {
 };
 
 export const createTestTaskStatus = async (app, sessionCookie) => {
-  const name = faker.lorem.word();
+  const name = generateName();
   const addTaskStatus = await request(app.server)
     .post('/taskStatuses')
     .set('cookie', sessionCookie)
@@ -75,7 +67,7 @@ export const createTestTaskStatus = async (app, sessionCookie) => {
 };
 
 export const createTestTask = async (app, sessionCookie, taskStatusId) => {
-  const name = faker.lorem.word();
+  const name = generateName();
   const res = await request(app.server)
     .post('/tasks')
     .set('cookie', sessionCookie)
@@ -93,7 +85,7 @@ export const createTestTask = async (app, sessionCookie, taskStatusId) => {
 };
 
 export const createTestLabel = async (app, sessionCookie) => {
-  const name = faker.lorem.word();
+  const name = generateName();
   const res = await request(app.server)
     .post('/labels')
     .set('cookie', sessionCookie)

@@ -1,4 +1,4 @@
-import { pickBy } from 'lodash';
+import { pickBy, isEmpty } from 'lodash';
 import i18next from 'i18next';
 import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
 import encrypt from '../lib/encrypt';
@@ -65,10 +65,14 @@ export default (app) => {
     })
     .delete('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
       const sessionId = req.session.get('userId');
-      const tasks = await app.objection.models.task.query();
-      const isCreatorOrExecutor = tasks
-        .some(({ creatorId, executorId }) => creatorId === sessionId || executorId === sessionId);
-      if (isCreatorOrExecutor) {
+      const taksCreatorOrExecutor = await app
+        .objection
+        .models
+        .task
+        .query()
+        .where('creatorId', sessionId)
+        .orWhere('executorId', sessionId);
+      if (!isEmpty(taksCreatorOrExecutor)) {
         req.flash('danger', i18next.t('flash.users.delete.error'));
         reply.redirect(app.reverse('tasks'));
         return reply;
