@@ -3,14 +3,74 @@ import {
   pickBy,
   isEmpty,
   mapValues,
+  uniqWith,
+  isEqual,
+  flattenDeep,
+  intersectionWith,
+  keys,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
+
+const filtrator = (keysOfQueryObj, queryData) => (task) => {
+  if (isEmpty(keysOfQueryObj)) {
+    return true;
+  }
+  const [key, ...rest] = keysOfQueryObj;
+  const dataOfTask = task[key];
+  const dataOfQuery = queryData[key];
+  if (Array.isArray(dataOfTask) && Array.isArray(dataOfQuery)) {
+    const intersection = intersectionWith(dataOfTask, dataOfQuery, (arrVal, otherVal) => {
+      const merged = { ...arrVal, ...otherVal };
+      return isEqual(merged, { ...arrVal });
+    });
+    if (isEmpty(intersection)) {
+      return false;
+    }
+    return isEmpty(intersection)
+      ? false
+      : filtrator(rest, queryData)(task);
+  }
+  return dataOfQuery.some((el) => el === dataOfTask)
+    ? filtrator(rest, queryData)(task)
+    : false;
+};
+
+const dataMapper = (tasks, queryObj) => {
+  const keysOfQueryObj = keys(queryObj);
+  return tasks.filter(filtrator(keysOfQueryObj, queryObj));
+};
 
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preHandler: checkSignedIn }, async (req, reply) => {
       const tasks = await app.objection.models.task.query().withGraphJoined('[taskStatus, creator, executor, labels]');
-      reply.render('/tasks/index', { tasks });
+      const extractedData = tasks.reduce((acc, { taskStatus, executor, labels: labelcoll }) => ({
+        ...acc,
+        taskStatuses: [taskStatus, ...acc.taskStatuses],
+        executors: [executor, ...acc.executors],
+        labels: [labelcoll, ...acc.labels],
+      }), { taskStatuses: [], executors: [], labels: [] });
+      const filters = mapValues(extractedData, (el) => {
+        const flattenedEl = flattenDeep(el).filter((e) => e);
+        return uniqWith(flattenedEl, isEqual);
+      });
+      if (!isEmpty(req.query)) {
+        const normalizedQuery = mapValues(req.query, (value, key) => {
+          if (key === 'labels') {
+            return Array.isArray(value)
+              ? value.map((el) => ({ id: Number.parseInt(el, 10) }))
+              : [{ id: Number.parseInt(value, 10) }];
+          }
+          if (Array.isArray(value)) {
+            return value.map((el) => Number.parseInt(el, 10));
+          }
+          return [Number.parseInt(value, 10)];
+        });
+        const filteredTasks = dataMapper(tasks, normalizedQuery);
+        reply.render('/tasks/index', { tasks: filteredTasks, filters });
+        return reply;
+      }
+      reply.render('/tasks/index', { tasks, filters });
       return reply;
     })
     .get('/tasks/new', { name: 'newTask', preHandler: checkSignedIn }, async (req, reply) => {
