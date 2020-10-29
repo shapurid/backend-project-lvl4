@@ -6,25 +6,37 @@ block content
     .col-6
       form(method='POST' action=route('createTask'))
         .form-group
-          label= `${t('views.tasks.name')}:`
+          label= `${t('views.tasks.new.name')}:`
           if errors.name
             input.form-control.is-invalid(type='text' name='name')
             .invalid-feedback= t('views.tasks.new.errors.name')
           else
             input.form-control(type='text' name='name')
         .form-group
-          label(for="formControlSelect1")= `${t('views.tasks.status')}:`
+          label(for="formControlSelect1")= `${t('views.tasks.new.status')}:`
           select(id="formControlSelect1" name="taskStatusId").custom-select
             for status of statuses
-              option(value=status.id)= status.name
+              if +currentTask.taskStatusId === status.id
+                option(value=status.id selected)= status.name
+              else
+                option(value=status.id)= status.name
         .form-group
-          label(for="formControlSelect2")= `${t('views.tasks.executor')}:`
+          label(for="formControlSelect2")= `${t('views.tasks.new.executor')}:`
           select(id="formControlSelect2" name="executorId").form-control
             option(value='') —
             for executor of executors
-              option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
+              if +currentTask.executorId === executor.id
+                option(value=executor.id selected)= `${executor.firstName} ${executor.lastName}`
+              else
+                option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
         .form-group
-          label= `${t('views.tasks.description')}:`
-          textarea.form-control(type='text' name="description" rows='3')= description
+          label= `${t('views.tasks.new.description')}:`
+          textarea.form-control(type='text' name="description" rows='3')= currentTask.description
+        if labels
+          .form-group
+            label(for="formControlSelect3")= `${t('views.tasks.new.label')}:`
+            select(id="formControlSelect3" name="labels" size="3" multiple).form-control
+              for label of labels
+                option(value=label.id)= label.name
         button.btn.btn-warning.btn-block(type='submit')= t('views.tasks.new.submit')
     .col

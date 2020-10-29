@@ -1,0 +1,27 @@
+extends ../layouts/app.pug
+
+block content
+  .row
+    .col
+    .col-7
+        table.table.table-hover.mb-4
+          thead.thead-light
+            tr
+              th(scope="col") #
+              th(scope="col")= t('views.labels.index.name')
+              th
+          if labels.length > 0
+            tbody
+              - let n = 0
+              for label of labels
+                tr
+                  th(scope="row")= n += 1
+                  td= label.name
+                  td
+                    .d-flex.justify-content-end
+                        a.btn.btn-outline-info.mr-2(href=`/labels/${label.id}/edit`)= t('views.labels.index.rename')
+                        form.form-inline(action=`/labels/${label.id}` method="post")
+                          input(type="hidden" name="_method" value="DELETE")
+                          button.btn.btn-danger(type="submit")= t('views.labels.index.delete')
+        a.btn.btn-dark.btn-block(href=route('newLabel'))= t('views.labels.index.add')
+    .col

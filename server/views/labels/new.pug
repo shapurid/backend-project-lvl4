@@ -4,13 +4,13 @@ block content
   .row
     .col
     .col-6
-      form(method="post" action='/taskStatuses')
+      form(method="post" action='/labels')
           .form-group
-            label= `${t('views.taskStatuses.new.name')}:`
+            label= `${t('views.labels.new.name')}:`
             if errors.name
               input.form-control.is-invalid(type='text' name='name')
-              .invalid-feedback= t('views.taskStatuses.new.error')
+              .invalid-feedback= t('views.labels.new.errors.name')
             else
               input.form-control(type='text' name='name' value=name)
-          button.btn.btn-warning.btn-block(type='submit')= t('views.taskStatuses.new.button')
+          button.btn.btn-warning.btn-block(type='submit')= t('views.labels.new.add')
     .col

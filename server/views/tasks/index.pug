@@ -8,11 +8,11 @@ block content
           thead.thead-light
             tr
               th(scope="col") #
-              th(scope="col")= t('views.tasks.name')
-              th(scope="col")= t('views.tasks.status')
-              th(scope="col")= t('views.tasks.creator')
-              th(scope="col")= t('views.tasks.executor')
-              th(scope="col")= t('views.tasks.description')
+              th(scope="col")= t('views.tasks.index.name')
+              th(scope="col")= t('views.tasks.index.status')
+              th(scope="col")= t('views.tasks.index.creator')
+              th(scope="col")= t('views.tasks.index.executor')
+              th(scope="col")= t('views.tasks.index.description')
               th(scope="col")
           tbody
             if tasks.length > 0
@@ -39,10 +39,15 @@ block content
                       if reply.request.currentUser.id === task.creatorId
                         form.form-inline(action=`/tasks/u${task.creatorId}/${task.id}` method='post')
                           input(type="hidden" name="_method" value="DELETE")
-                          button.btn.btn-danger.btn-sm(type="submit")= t('views.tasks.delete')
-                      a.btn.btn-outline-info.ml-2.btn-sm(href=`/tasks/${task.id}/edit`)= t('views.tasks.edit.button')
+                          button.btn.btn-danger.btn-sm(type="submit")= t('views.tasks.index.delete')
+                      a.btn.btn-outline-info.ml-2.btn-sm(href=`/tasks/${task.id}/edit`)= t('views.tasks.index.edit')
+                tr
+                  if task.labels.length > 0
+                    td(colspan="7")
+                      for label of task.labels
+                        span.badge.badge-info.mr-1= label.name
                 tr
                   if task.description
                     td.collapse(id=`collapse${n}` colspan="7")= task.description
-        a.btn.btn-dark.btn-block(href=route('newTask'))= t('views.tasks.add')
+        a.btn.btn-dark.btn-block(href=route('newTask'))= t('views.tasks.index.add')
     .col
