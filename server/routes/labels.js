@@ -55,10 +55,10 @@ export default (app) => {
         reply.redirect(app.reverse('labels'));
         return reply;
       } catch ({ data }) {
-        const isNameUniqErr = data.name
+        const isNameUniqError = data.name
           ? data.name.some((el) => el.keyword === 'unique')
           : false;
-        if (isNameUniqErr) {
+        if (isNameUniqError) {
           req.flash('danger', i18next.t('flash.labels.modify.error'));
         }
         reply
@@ -68,10 +68,9 @@ export default (app) => {
       }
     })
     .delete('/labels/:id', { preHandler: checkSignedIn }, async (req, reply) => {
-      await Promise.all([
-        app.objection.models.label.query().deleteById(req.params.id),
-        app.objection.models.taskLabel.query().delete().where('labelId', req.params.id),
-      ]);
+      const label = await app.objection.models.label.query().findById(req.params.id);
+      await label.$relatedQuery('tasks').unrelate();
+      await label.$query().delete();
       req.flash('success', i18next.t('flash.labels.delete.success'));
       reply.redirect(app.reverse('labels'));
       return reply;

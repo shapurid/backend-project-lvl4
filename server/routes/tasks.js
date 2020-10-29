@@ -3,14 +3,53 @@ import {
   pickBy,
   isEmpty,
   mapValues,
+  toPairs,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
+
+const dbQueryBuilder = (queryPairs) => (builder) => {
+  if (isEmpty(queryPairs)) {
+    return builder;
+  }
+  const [[key, values], ...rest] = queryPairs;
+  const newBuilder = builder.whereIn(key, values);
+  return dbQueryBuilder(rest)(newBuilder);
+};
 
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preHandler: checkSignedIn }, async (req, reply) => {
-      const tasks = await app.objection.models.task.query().withGraphJoined('[taskStatus, creator, executor, labels]');
-      reply.render('/tasks/index', { tasks });
+      const [taskStatuses, executors, labels] = await Promise.all([
+        app.objection.models.taskStatus.query(),
+        app.objection.models.user.query(),
+        app.objection.models.label.query(),
+      ]);
+      const filters = { taskStatuses, executors, labels };
+      if (!isEmpty(req.query)) {
+        const normalizedQuery = mapValues(req.query, (value) => {
+          if (Array.isArray(value)) {
+            return value.map((el) => Number.parseInt(el, 10));
+          }
+          return [Number.parseInt(value, 10)];
+        });
+        const queryPairs = toPairs(normalizedQuery);
+        const tasks = await app
+          .objection
+          .models
+          .task
+          .query()
+          .withGraphJoined('[taskStatus, creator, executor, labels]')
+          .where(dbQueryBuilder(queryPairs));
+        reply.render('/tasks/index', { tasks, filters });
+        return reply;
+      }
+      const tasks = await app
+        .objection
+        .models
+        .task
+        .query()
+        .withGraphJoined('[taskStatus, creator, executor, labels]');
+      reply.render('/tasks/index', { tasks, filters });
       return reply;
     })
     .get('/tasks/new', { name: 'newTask', preHandler: checkSignedIn }, async (req, reply) => {
@@ -121,7 +160,7 @@ export default (app) => {
         const currentTask = await app.objection.models.task.query().findById(req.params.id);
         await Promise.all([
           currentTask.$query().patch(normalizedBody),
-          app.objection.models.taskLabel.query().delete().where('taskId', currentTask.id),
+          currentTask.$relatedQuery('labels').unrelate(),
         ]);
         if (labels) {
           const normalizedLabels = Array.isArray(labels)
@@ -158,10 +197,9 @@ export default (app) => {
       }
     })
     .delete('/tasks/u:creatorId/:id', { preHandler: checkTaskOwnership }, async (req, reply) => {
-      await Promise.all([
-        app.objection.models.task.query().deleteById(req.params.id),
-        app.objection.models.taskLabel.query().delete().where('taskId', req.params.id),
-      ]);
+      const task = await app.objection.models.task.query().findById(req.params.id);
+      await task.$relatedQuery('labels').unrelate();
+      await task.$query().delete();
       req.flash('success', i18next.t('flash.tasks.delete.success'));
       reply.redirect(app.reverse('tasks'));
       return reply;

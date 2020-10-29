@@ -34,10 +34,10 @@ export default (app) => {
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
       } catch ({ data }) {
-        const isNameUniqErr = data.name
+        const isNameUniqError = data.name
           ? data.name.some((el) => el.keyword === 'unique')
           : false;
-        if (isNameUniqErr) {
+        if (isNameUniqError) {
           req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
         }
         reply
