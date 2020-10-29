@@ -13,7 +13,7 @@ if tasks.length > 0
           option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
     .form-group
       label(for="formControlSelect3")= `Тэги:`
-      select(id="formControlSelect3" name="labels" size="1" multiple).form-control
+      select(id="formControlSelect3" name="labels.id" size="1" multiple).form-control
         for label of filters.labels
           option(value=label.id)= label.name
     button.btn.btn-primary(type='submit')= `Применить фильтры`

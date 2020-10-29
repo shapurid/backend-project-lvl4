@@ -30,10 +30,10 @@ export default (app) => {
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
-        const isEmailUniqErr = data.email
+        const isEmailUniqError = data.email
           ? data.email.some((el) => el.keyword === 'unique')
           : false;
-        if (isEmailUniqErr) {
+        if (isEmailUniqError) {
           req.flash('danger', i18next.t('flash.users.create.error'));
         }
         reply
