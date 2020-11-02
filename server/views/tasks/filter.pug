@@ -1,19 +1,8 @@
 
 if tasks.length > 0
-  form.form-inline(method="get").justify-content-between.mb-3
-    .form-group
-      label(for="formControlSelect1")= `Статусы:`
-      select(id="formControlSelect1" name="taskStatusId" size="1" multiple).form-control
-        for status of filters.taskStatuses
-          option(value=status.id)= status.name
-    .form-group
-      label(for="formControlSelect2")= `Исполнители:`
-      select(id="formControlSelect2" name="executorId" size="1" multiple).form-control
-        for executor of filters.executors
-          option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
-    .form-group
-      label(for="formControlSelect3")= `Тэги:`
-      select(id="formControlSelect3" name="labels.id" size="1" multiple).form-control
-        for label of filters.labels
-          option(value=label.id)= label.name
-    button.btn.btn-primary(type='submit')= `Применить фильтры`
+  +formFor().justify-content-between.mb-3.form-inline
+    - let n = 8
+    +select(filterForm, 'taskStatuses', 'taskStatusId', n++)
+    +select(filterForm, 'executors', 'executorId', n++)
+    +select(filterForm, 'labels', 'labels.id', n++, true)
+    +submit(filterForm).bnt-block

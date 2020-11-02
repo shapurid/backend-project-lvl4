@@ -3,28 +3,24 @@ import {
   pickBy,
   isEmpty,
   mapValues,
-  toPairs,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
-
-const dbQueryBuilder = (queryPairs) => (builder) => {
-  if (isEmpty(queryPairs)) {
-    return builder;
-  }
-  const [[key, values], ...rest] = queryPairs;
-  const newBuilder = builder.whereIn(key, values);
-  return dbQueryBuilder(rest)(newBuilder);
-};
 
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preHandler: checkSignedIn }, async (req, reply) => {
+      const taskForm = { entityName: 'tasks.index' };
       const [taskStatuses, executors, labels] = await Promise.all([
         app.objection.models.taskStatus.query(),
         app.objection.models.user.query(),
         app.objection.models.label.query(),
       ]);
-      const filters = { taskStatuses, executors, labels };
+      const filterForm = {
+        entityName: 'tasks.filters',
+        taskStatuses,
+        executors,
+        labels,
+      };
       if (!isEmpty(req.query)) {
         const normalizedQuery = mapValues(req.query, (value) => {
           if (Array.isArray(value)) {
@@ -32,15 +28,15 @@ export default (app) => {
           }
           return [Number.parseInt(value, 10)];
         });
-        const queryPairs = toPairs(normalizedQuery);
         const tasks = await app
           .objection
           .models
           .task
           .query()
           .withGraphJoined('[taskStatus, creator, executor, labels]')
-          .where(dbQueryBuilder(queryPairs));
-        reply.render('/tasks/index', { tasks, filters });
+          .where((builder) => mapValues(normalizedQuery,
+            (value, key) => builder.whereIn(key, value)));
+        reply.render('/tasks/index', { taskForm, tasks, filterForm });
         return reply;
       }
       const tasks = await app
@@ -49,12 +45,12 @@ export default (app) => {
         .task
         .query()
         .withGraphJoined('[taskStatus, creator, executor, labels]');
-      reply.render('/tasks/index', { tasks, filters });
+      reply.render('/tasks/index', { taskForm, tasks, filterForm });
       return reply;
     })
     .get('/tasks/new', { name: 'newTask', preHandler: checkSignedIn }, async (req, reply) => {
-      const statuses = await app.objection.models.taskStatus.query();
-      if (isEmpty(statuses)) {
+      const taskStatuses = await app.objection.models.taskStatus.query();
+      if (isEmpty(taskStatuses)) {
         req.flash('danger', i18next.t('flash.tasks.create.error'));
         reply.redirect(app.reverse('taskStatuses'));
         return reply;
@@ -63,16 +59,16 @@ export default (app) => {
         app.objection.models.user.query(),
         app.objection.models.label.query(),
       ]);
-      reply.render('/tasks/new', {
-        statuses,
+      const taskForm = {
+        entityName: 'tasks.new',
+        taskStatuses,
         executors,
         labels,
-        currentTask: {},
-        errors: {},
-      });
+      };
+      reply.render('/tasks/new', { taskForm });
       return reply;
     })
-    .get('/tasks/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/tasks/:id/edit', { name: 'taskProfile', preHandler: checkSignedIn }, async (req, reply) => {
       const foundedTask = await app
         .objection
         .models
@@ -84,18 +80,19 @@ export default (app) => {
         reply.notFound();
         return reply;
       }
-      const [statuses, executors, labels] = await Promise.all([
+      const [taskStatuses, executors, labels] = await Promise.all([
         app.objection.models.taskStatus.query(),
         app.objection.models.user.query(),
         app.objection.models.label.query(),
       ]);
-      reply.render('/tasks/edit', {
-        errors: {},
-        statuses,
+      const taskForm = {
+        entityName: 'tasks.edit',
+        currentTask: foundedTask,
+        taskStatuses,
         executors,
         labels,
-        currentTask: foundedTask,
-      });
+      };
+      reply.render('/tasks/edit', { taskForm });
       return reply;
     })
     .post('/tasks', { name: 'createTask', preHandler: checkSignedIn }, async (req, reply) => {
@@ -111,42 +108,41 @@ export default (app) => {
         });
         const data = { ...normalizedBody, creatorId: req.currentUser.id };
         const task = await app.objection.models.task.fromJson(data);
-        const insertedTask = await app.objection.models.task.query().insert(task);
         if (labels) {
-          const normalizedLabels = Array.isArray(labels)
+          const normalizedLabelIds = Array.isArray(labels)
             ? labels.map((el) => Number.parseInt(el, 10))
             : [Number.parseInt(labels, 10)];
-          await Promise.all([normalizedLabels.forEach(async (label) => {
-            const verifiedLabel = await app
-              .objection
-              .models
-              .taskLabel
-              .fromJson({ taskId: insertedTask.id, labelId: label });
-            await app.objection.models.taskLabel.query().insert(verifiedLabel);
-          })]);
+          const tags = await app.objection.models.label.query().findByIds(normalizedLabelIds);
+          await app.objection.models.task.query().insertGraph({
+            ...task,
+            labels: tags,
+          }, { relate: true });
+        } else {
+          await app.objection.models.task.query().insert(task);
         }
         req.flash('success', i18next.t('flash.tasks.create.success'));
         reply.redirect(app.reverse('tasks'));
         return reply;
       } catch ({ data }) {
-        const [statuses, executors, labels] = await Promise.all([
+        const [taskStatuses, executors, labels] = await Promise.all([
           app.objection.models.taskStatus.query(),
           app.objection.models.user.query(),
           app.objection.models.label.query(),
         ]);
+        const taskForm = {
+          entityName: 'tasks.new',
+          taskStatuses,
+          executors,
+          labels,
+          currentTask: req.body,
+        };
         reply
           .code(422)
-          .render('/tasks/new', {
-            statuses,
-            executors,
-            labels,
-            errors: data,
-            currentTask: req.body,
-          });
+          .render('/tasks/new', { taskForm, errors: data });
         return reply;
       }
     })
-    .patch('/tasks/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
+    .patch('/tasks/:id/edit', { name: 'editTask', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const { _method, labels, ...body } = req.body;
         const normalizedEmptyStringsBody = mapValues(body, (el) => el || null);
@@ -158,47 +154,44 @@ export default (app) => {
           return transformedValue;
         });
         const currentTask = await app.objection.models.task.query().findById(req.params.id);
-        await Promise.all([
-          currentTask.$query().patch(normalizedBody),
-          currentTask.$relatedQuery('labels').unrelate(),
-        ]);
+        await currentTask.$query().patch(normalizedBody);
         if (labels) {
-          const normalizedLabels = Array.isArray(labels)
+          const normalizedLabelIds = Array.isArray(labels)
             ? labels.map((el) => Number.parseInt(el, 10))
             : [Number.parseInt(labels, 10)];
-          await Promise.all([normalizedLabels.forEach(async (label) => {
-            const verifiedLabel = await app
-              .objection
-              .models
-              .taskLabel
-              .fromJson({ taskId: currentTask.id, labelId: label });
-            await app.objection.models.taskLabel.query().insert(verifiedLabel);
-          })]);
+          const tags = await app.objection.models.label.query().findByIds(normalizedLabelIds);
+          await app.objection.models.task.query().upsertGraph({
+            ...currentTask,
+            labels: tags,
+          }, { relate: true, unrelate: true });
+        } else {
+          await currentTask.$relatedQuery('labels').unrelate();
         }
         req.flash('success', i18next.t('flash.tasks.modify.success'));
         reply.redirect(app.reverse('tasks'));
         return reply;
       } catch ({ data }) {
-        const [statuses, executors, labels] = await Promise.all([
+        const [taskStatuses, executors, labels] = await Promise.all([
           app.objection.models.taskStatus.query(),
           app.objection.models.user.query(),
           app.objection.models.label.query(),
         ]);
+        const taskForm = {
+          entityName: 'tasks.edit',
+          taskStatuses,
+          executors,
+          labels,
+          currentTask: req.body,
+        };
         reply
           .code(422)
-          .render('/tasks/edit', {
-            statuses,
-            executors,
-            labels,
-            errors: data,
-            currentTask: req.body,
-          });
+          .render('/tasks/edit', { taskForm, errors: data });
         return reply;
       }
     })
-    .delete('/tasks/u:creatorId/:id', { preHandler: checkTaskOwnership }, async (req, reply) => {
+    .delete('/tasks/u:creatorId/:id', { name: 'deleteTask', preHandler: checkTaskOwnership }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
-      await task.$relatedQuery('labels').unrelate();
+      await task.$relatedQuery('labels');
       await task.$query().delete();
       req.flash('success', i18next.t('flash.tasks.delete.success'));
       reply.redirect(app.reverse('tasks'));

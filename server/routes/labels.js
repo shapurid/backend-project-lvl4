@@ -4,15 +4,17 @@ import { checkSignedIn } from '../lib/preHandlers';
 export default (app) => {
   app
     .get('/labels', { name: 'labels', preHandler: checkSignedIn }, async (req, reply) => {
+      const labelsForm = { entityName: 'labels.index' };
       const labels = await app.objection.models.label.query();
-      reply.render('/labels/index', { labels });
+      reply.render('/labels/index', { labelsForm, labels });
       return reply;
     })
     .get('/labels/new', { name: 'newLabel', preHandler: checkSignedIn }, (req, reply) => {
-      reply.render('/labels/new', { errors: {} });
+      const labelsForm = { entityName: 'labels.new' };
+      reply.render('/labels/new', { labelsForm });
       return reply;
     })
-    .post('/labels', { preHandler: checkSignedIn }, async (req, reply) => {
+    .post('/labels', { name: 'createLabel', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const tag = await app.objection.models.label.fromJson(req.body);
         await app.objection.models.label.query().insert(tag);
@@ -20,19 +22,20 @@ export default (app) => {
         reply.redirect(app.reverse('labels'));
         return reply;
       } catch ({ data }) {
-        const isNameUniqErr = data.name
+        const labelsForm = { entityName: 'labels.new' };
+        const isNameUniqError = data.name
           ? data.name.some((el) => el.keyword === 'unique')
           : false;
-        if (isNameUniqErr) {
+        if (isNameUniqError) {
           req.flash('danger', i18next.t('flash.labels.create.error'));
         }
         reply
           .code(422)
-          .render('/labels/new', { errors: data });
+          .render('/labels/new', { labelsForm, errors: data });
         return reply;
       }
     })
-    .get('/labels/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/labels/:id/edit', { name: 'labelProfile', preHandler: checkSignedIn }, async (req, reply) => {
       const labelName = await app
         .objection
         .models
@@ -43,10 +46,11 @@ export default (app) => {
         reply.notFound();
         return reply;
       }
-      reply.render('/labels/edit', { errors: {}, ...labelName });
+      const labelsForm = { entityName: 'label.edit', ...labelName };
+      reply.render('/labels/edit', { labelsForm });
       return reply;
     })
-    .patch('/labels/:id/edit', { preHandler: checkSignedIn }, async (req, reply) => {
+    .patch('/labels/:id/edit', { name: 'editLabel', preHandler: checkSignedIn }, async (req, reply) => {
       try {
         const newData = await app.objection.models.label.fromJson(req.body);
         const tag = await app.objection.models.label.query().findById(req.params.id);
@@ -55,6 +59,7 @@ export default (app) => {
         reply.redirect(app.reverse('labels'));
         return reply;
       } catch ({ data }) {
+        const labelsForm = { entityName: 'label.edit', ...req.body };
         const isNameUniqError = data.name
           ? data.name.some((el) => el.keyword === 'unique')
           : false;
@@ -63,11 +68,11 @@ export default (app) => {
         }
         reply
           .code(422)
-          .render('/labels/edit', { errors: data });
+          .render('/labels/edit', { labelsForm, errors: data });
         return reply;
       }
     })
-    .delete('/labels/:id', { preHandler: checkSignedIn }, async (req, reply) => {
+    .delete('/labels/:id', { name: 'deleteLabel', preHandler: checkSignedIn }, async (req, reply) => {
       const label = await app.objection.models.label.query().findById(req.params.id);
       await label.$relatedQuery('tasks').unrelate();
       await label.$query().delete();

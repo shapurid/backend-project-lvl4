@@ -1,0 +1,54 @@
+- const getEntityName = (entity) => _.get(entity, 'entityName');
+- const getInputName = (entity, property) => `${getEntityName(entity)}[${property}]`
+
+mixin formFor(entity = null)
+  form&attributes(attributes)
+    block
+
+mixin input(entity, propertyName, errors = {})
+  - const error = _.get(errors, propertyName)
+  - const typeOfInput = propertyName === 'password' || propertyName === 'email' ? propertyName : 'text'
+  - const valueOfInput= typeOfInput === 'password' ? '' : _.get(entity, propertyName)
+  - const entityName = getEntityName(entity)
+  - const labelName = t(`views.${entityName}.${propertyName}.label`)
+  .form-group
+    label= `${labelName}:`
+    input.form-control(
+      name= propertyName
+      type= typeOfInput
+      class=`${error ? 'is-invalid' : ''}`
+      value= valueOfInput
+    )&attributes(attributes)
+    if error
+      .invalid-feedback= t(`views.${entityName}.${propertyName}.error`)
+
+mixin select(entity, propertyName, nameOfSelect, selectCount, isMultiple=false)
+  - const entityName = getEntityName(entity)
+  - const { currentTask } = entity
+  - const values = entity[propertyName]
+  - const selectId = `formControlSelect${selectCount}`
+  - const labelName = t(`views.${entityName}.${propertyName}.label`)
+  .form-group
+    label(for=selectId)= `${labelName}:`
+    select.form-control(id=selectId name=nameOfSelect multiple=isMultiple size='2')
+      for value of values
+        if currentTask && +currentTask[nameOfSelect] === +value.id
+          option(value=value.id selected)= value.name
+        else
+          option(value=value.id)= value.name
+
+mixin textarea(entity, propertyName)
+  - const entityName = getEntityName(entity)
+  - const labelName = t(`views.${entityName}.${propertyName}.label`)
+  label= `${labelName}:`
+  .form-group
+    textarea.form-control(type='text' name=propertyName rows='3')
+
+mixin submit(entity)
+  - entityName = getEntityName(entity);
+  button.btn.btn-primary(type='submit')&attributes(attributes)= t(`views.${entityName}.submit`)
+
+mixin buttonTo(entity, method)
+  - entityName = getEntityName(entity);
+  input(name="_method" type="hidden" value=method)
+  button.btn(type='submit')&attributes(attributes)= t(`views.${entityName}.${method}`)

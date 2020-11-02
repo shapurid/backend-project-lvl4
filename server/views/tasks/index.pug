@@ -24,10 +24,10 @@ block content
                 td= task.name
                 td= task.taskStatus.name
                 td
-                  a(href=`/users/${task.creator.id}`)= `${task.creator.firstName} ${task.creator.lastName}`
+                  a(href=route('userProfile', { id: task.creator.id }))= task.creator.name
                 td
                   if task.executor
-                    a(href=`/users/${task.executor.id}`)= `${task.executor.firstName} ${task.executor.lastName}`
+                    a(href=route('userProfile', { id: task.executor.id }))= task.creator.name
                   else
                     .d-flex.justify-content-center —
                 td
@@ -38,10 +38,9 @@ block content
                 td
                   .d-flex.justify-content-end
                     if reply.request.currentUser.id === task.creatorId
-                      form.form-inline(action=`/tasks/u${task.creatorId}/${task.id}` method='post')
-                        input(type="hidden" name="_method" value="DELETE")
-                        button.btn.btn-danger.btn-sm(type="submit")= t('views.tasks.index.delete')
-                    a.btn.btn-outline-info.ml-2.btn-sm(href=`/tasks/${task.id}/edit`)= t('views.tasks.index.edit')
+                      +formFor(action=route('deleteTask', { creatorId: task.creatorId, id: task.id }), method='post')
+                        +buttonTo(taskForm, 'delete').btn-danger
+                    a.btn.btn-outline-info.ml-2.btn-sm(href=route('taskProfile', { id: task.id }))= t('views.tasks.index.edit')
               tr
                 if task.labels.length > 0
                   td(colspan="7")

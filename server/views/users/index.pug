@@ -8,9 +8,9 @@ block content
         thead.thead-light
           tr
             th(scope="col") #
-            th(scope="col")= t('views.users.firstName')
-            th(scope="col")= t('views.users.lastName')
-            th(scope="col")= t('views.users.email')
+            th(scope="col")= t('views.users.index.firstName')
+            th(scope="col")= t('views.users.index.lastName')
+            th(scope="col")= t('views.users.index.email')
             th
         tbody
           - let n = 0
@@ -23,5 +23,5 @@ block content
               td
                if reply.request.signedIn
                 .d-flex
-                  a.btn.btn-outline-info.ml-auto(href=`/users/${user.id}`)= t('views.users.watchProfile')
+                  a.btn.btn-outline-info.ml-auto(href=route('userProfile', { id: user.id }))= t('views.users.index.watchProfile')
     .col

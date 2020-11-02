@@ -4,44 +4,12 @@ block content
   .row
     .col
     .col-6
-      form(method='POST' action=`/tasks/${reply.request.params.id}/edit`)
-        .form-group
-          label= `${t('views.tasks.edit.name')}:`
-          if errors.name
-            input.form-control.is-invalid(type='text' name='name')
-            .invalid-feedback= t('views.tasks.edit.errors.name')
-          else
-            input.form-control(type='text' name='name' value=currentTask.name)
-        .form-group
-          label(for="formControlSelect1")= `${t('views.tasks.edit.status')}:`
-          select(id="formControlSelect1" name="taskStatusId").custom-select
-            for status of statuses
-              if currentTask.taskStatusId === status.id
-                option(value=status.id selected)= status.name
-              else
-                option(value=status.id)= status.name
-        .form-group
-          label(for="formControlSelect2")= `${t('views.tasks.edit.executor')}:`
-          select(id="formControlSelect2" name="executorId").form-control
-            option(value='') —
-            for executor of executors
-              if currentTask.executorId === executor.id
-                option(value=executor.id selected)= `${executor.firstName} ${executor.lastName}`
-              else
-                option(value=executor.id)= `${executor.firstName} ${executor.lastName}`
-        .form-group
-          label= `${t('views.tasks.edit.description')}:`
-          textarea.form-control(type='text' name="description" rows='3')= currentTask.description
-        if labels
-          .form-group
-            label(for="formControlSelect3")= `${t('views.tasks.edit.label')}:`
-            select(id="formControlSelect3" name="labels" size="3" multiple).form-control
-              - const idsOfCurrentTaskLabels = currentTask.labels.map(el => el.id);
-              for label of labels
-                if idsOfCurrentTaskLabels.includes(label.id)
-                  option(value=label.id selected)= label.name
-                else
-                  option(value=label.id)= label.name
-        input(type="hidden" name="_method" value="patch")
-        button.btn.btn-warning.btn-block(type='submit')= t('views.tasks.edit.submit')
+      +formFor(action=route('editTask', { id: reply.request.params.id }) method='post')
+        - let n = 0
+        +input(taskForm, 'name', errors)
+        +select(taskForm, 'taskStatuses', 'taskStatusId', n++)
+        +select(taskForm, 'executors', 'executorId', n++)
+        +select(taskForm, 'labels', 'labels', n++, true)
+        +textarea(taskForm, 'description')
+        +buttonTo(taskForm, 'patch').btn-warning.btn-block
     .col

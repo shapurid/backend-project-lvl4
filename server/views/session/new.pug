@@ -5,12 +5,8 @@ block content
     .col
     .col-5
       h3.mb-4= t('views.session.new.signIn')
-      form(action=route('createSession') method='post')
-        .form-group
-          label E-mail:
-          input.form-control(type='email' name='email')
-        .form-group
-          label Пароль:
-          input.form-control(type='password' name='password' minlength="3")
-        button.btn.btn-info.btn-block(type='submit')= t('views.session.new.submit')
+      +formFor(action=route('createSession') method='post')
+        +input(signInForm, 'email')
+        +input(signInForm, 'password')
+        +submit(signInForm).btn-block    
     .col

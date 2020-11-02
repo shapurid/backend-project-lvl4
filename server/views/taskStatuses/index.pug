@@ -4,24 +4,23 @@ block content
   .row
     .col
     .col-7
-        table.table.table-hover.mb-4
-          thead.thead-light
+      table.table.table-hover.mb-4
+        thead.thead-light
+          tr
+            th(scope="col") #
+            th(scope="col")= t('views.taskStatuses.index.name')
+            th
+        if statusList.length > 0
+         tbody
+          - let n = 0
+          for taskStatus of statusList
             tr
-              th(scope="col") #
-              th(scope="col")= t('views.taskStatuses.name')
-              th
-          if statusList.length > 0
-           tbody
-            - let n = 0
-            for taskStatus of statusList
-              tr
-                th(scope="row")= n += 1
-                td= taskStatus.name
-                td
-                  .d-flex.justify-content-end
-                      a.btn.btn-outline-info.mr-2(href=`/taskStatuses/${taskStatus.id}/edit`)= t('views.taskStatuses.rename')
-                      form.form-inline(action=`/taskStatuses/${taskStatus.id}` method='post')
-                        input(type="hidden" name="_method" value="DELETE")
-                        button.btn.btn-danger(type="submit")= t('views.taskStatuses.delete')
-        a.btn.btn-dark.btn-block(href=route('newTaskStatus'))= t('views.taskStatuses.add')
+              th(scope="row")= n += 1
+              td= taskStatus.name
+              td
+                .d-flex.justify-content-end
+                  a.btn.btn-outline-info.mr-2(href=route('taskStatusProfile', { id: taskStatus.id }))= t('views.taskStatuses.index.edit')
+                  +formFor(action=route('deleteTaskStatus', { id: taskStatus.id }) method='post')
+                    +buttonTo(taskStatusForm, 'delete').btn-danger
+      a.btn.btn-dark.btn-block(href=route('newTaskStatus'))= t('views.taskStatuses.index.new')
     .col

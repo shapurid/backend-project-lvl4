@@ -5,34 +5,10 @@ block content
     .col
     .col-5
       h3.mb-4 Регистрация
-      form(method='POST' action=route('createUser'))
-        .form-group
-          label= `${t('views.users.firstName')}:`
-          if errors.firstName
-            input.form-control.is-invalid(type='text' name='firstName')
-            .invalid-feedback= t('views.users.new.errors.firstName')
-          else
-            input.form-control(type='text' name='firstName' value=firstName)
-        .form-group
-          label= `${t('views.users.lastName')}:`
-          if errors.lastName
-            input.form-control.is-invalid(type='text' name='lastName')
-            .invalid-feedback= t('views.users.new.errors.lastName')
-          else
-            input.form-control(type='text' name='lastName' value=lastName)
-        .form-group
-          label= `${t('views.users.email')}:`
-          if errors.email
-            input.form-control.is-invalid(type='email' name='email')
-            .invalid-feedback= t('views.users.new.errors.email')
-          else
-            input.form-control(type='email' name='email' value=email)
-        .form-group
-          label= `${t('views.users.password')}:`
-          if errors.password
-            input.form-control.is-invalid(type='password' name='password' minlength="3")
-            .invalid-feedback= t('views.users.new.errors.password')
-          else
-            input.form-control(type='password' name='password' minlength="3")
-        button.btn.btn-warning.btn-block(type='submit')= t('views.users.new.signUp')
+      +formFor(action=route('createUser') method='post')
+        +input(registrationForm, 'firstName', errors)
+        +input(registrationForm, 'lastName', errors)
+        +input(registrationForm, 'email', errors)
+        +input(registrationForm, 'password', errors)(minLength = '3')
+        +submit(registrationForm).btn-block
     .col

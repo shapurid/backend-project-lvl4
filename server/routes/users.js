@@ -10,17 +10,19 @@ export default (app) => {
       reply.render('/users/index', { users });
       return reply;
     })
-    .get('/users/:id', { preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/users/:id', { name: 'userProfile', preHandler: checkSignedIn }, async (req, reply) => {
       const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(req.params.id);
       if (!user) {
         reply.notFound();
         return reply;
       }
-      reply.render('/users/profile', { ...user, errors: {} });
+      const userForm = { entityName: 'users.profile' };
+      reply.render('/users/profile', { userForm, ...user });
       return reply;
     })
     .get('/users/new', { name: 'newUser' }, (req, reply) => {
-      reply.render('/users/new', { errors: {} });
+      const registrationForm = { entityName: 'users.new' };
+      reply.render('/users/new', { registrationForm });
     })
     .post('/users', { name: 'createUser' }, async (req, reply) => {
       try {
@@ -30,6 +32,7 @@ export default (app) => {
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
+        const registrationForm = { entityName: 'users.new', ...req.body };
         const isEmailUniqError = data.email
           ? data.email.some((el) => el.keyword === 'unique')
           : false;
@@ -38,11 +41,11 @@ export default (app) => {
         }
         reply
           .code(422)
-          .render('users/new', { errors: data, ...req.body });
+          .render('/users/new', { errors: data, registrationForm });
         return reply;
       }
     })
-    .patch('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
+    .patch('/users/:id', { name: 'editUser', preHandler: checkProfileOwnership }, async (req, reply) => {
       try {
         const { _method, ...body } = req.body;
         const filteredBody = pickBy(body, (el) => el.length > 0);
@@ -57,13 +60,16 @@ export default (app) => {
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
+        const sessionId = req.session.get('userId');
+        const currentUser = await app.objection.models.user.query().findById(sessionId);
+        const userForm = { entityName: 'users.profile', ...req.body };
         reply
           .code(422)
-          .render('users/new', { errors: data, ...req.body });
+          .render('/users/profile', { errors: data, userForm, ...currentUser });
         return reply;
       }
     })
-    .delete('/users/:id', { preHandler: checkProfileOwnership }, async (req, reply) => {
+    .delete('/users/:id', { name: 'deleteUser', preHandler: checkProfileOwnership }, async (req, reply) => {
       const sessionId = req.session.get('userId');
       const taksCreatorOrExecutor = await app
         .objection
