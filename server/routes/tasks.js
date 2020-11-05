@@ -1,7 +1,6 @@
 import i18next from 'i18next';
-import {
-  isEmpty,
-} from 'lodash';
+import { isEmpty } from 'lodash';
+import { parse } from 'qs';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
 
 export default (app) => {
@@ -26,7 +25,8 @@ export default (app) => {
         labels,
       };
       if (!isEmpty(req.query)) {
-        const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
+        const parsedQueryString = parse(req.query);
+        const { taskStatusId, executorId, 'labels.id': labelsId } = parsedQueryString.form;
         if (taskStatusId) {
           const normalizedTaskStatusId = [Number.parseInt(taskStatusId, 10)];
           queryTasks.whereIn('taskStatusId', normalizedTaskStatusId);
@@ -89,14 +89,14 @@ export default (app) => {
       return reply;
     })
     .post('/tasks', { name: 'tasksCreate', preHandler: checkSignedIn }, async (req, reply) => {
+      const {
+        name,
+        taskStatusId,
+        executorId,
+        description = null,
+        labels = [],
+      } = req.body.form;
       try {
-        const {
-          name,
-          taskStatusId,
-          executorId,
-          description = null,
-          labels = [],
-        } = req.body.form;
         const foundLabels = await app
           .objection
           .models
@@ -115,7 +115,7 @@ export default (app) => {
         reply.redirect(app.reverse('tasksIndex'));
         return reply;
       } catch ({ data }) {
-        const [taskStatuses, executors, labels] = await Promise.all([
+        const [taskStatuses, executors, allLabels] = await Promise.all([
           app.objection.models.taskStatus.query(),
           app.objection.models.user.query(),
           app.objection.models.label.query(),
@@ -124,7 +124,7 @@ export default (app) => {
           translationPath: 'tasks.new',
           taskStatuses,
           executors,
-          labels,
+          labels: allLabels,
           currentTask: req.body.form,
         };
         req.flash('danger', i18next.t('flash.tasks.create.error'));
@@ -135,14 +135,14 @@ export default (app) => {
       }
     })
     .patch('/tasks/:id/edit', { name: 'tasksUpdate', preHandler: checkSignedIn }, async (req, reply) => {
+      const {
+        name,
+        taskStatusId,
+        executorId,
+        description = null,
+        labels = [],
+      } = req.body.form;
       try {
-        const {
-          name,
-          taskStatusId,
-          executorId,
-          description = null,
-          labels = [],
-        } = req.body.form;
         const currentTask = await app.objection.models.task.query().findById(req.params.id);
         const foundLabels = await app
           .objection
@@ -162,7 +162,7 @@ export default (app) => {
         reply.redirect(app.reverse('tasksIndex'));
         return reply;
       } catch ({ data }) {
-        const [taskStatuses, executors, labels] = await Promise.all([
+        const [taskStatuses, executors, allLabels] = await Promise.all([
           app.objection.models.taskStatus.query(),
           app.objection.models.user.query(),
           app.objection.models.label.query(),
@@ -171,7 +171,7 @@ export default (app) => {
           translationPath: 'tasks.edit',
           taskStatuses,
           executors,
-          labels,
+          labels: allLabels,
           currentTask: req.body.form,
         };
         req.flash('danger', i18next.t('flash.tasks.modify.error'));

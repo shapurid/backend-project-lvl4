@@ -50,8 +50,8 @@ export const getSettedDataFromDb = async (app) => {
     app.objection.models.taskStatus.query().findOne(dataForDb.taskStatus),
     app.objection.models.label.query().findOne(dataForDb.label),
     app.objection.models.task.query().findOne(dataForDb.task),
-    request(app.server).post('/session').type('form').send({ email: dataForDb.user1.email, password: dataForDb.user1.password }),
-    request(app.server).post('/session').type('form').send({ email: dataForDb.user2.email, password: dataForDb.user2.password }),
+    request(app.server).post('/session').type('form').send({ form: { email: dataForDb.user1.email, password: dataForDb.user1.password } }),
+    request(app.server).post('/session').type('form').send({ form: { email: dataForDb.user2.email, password: dataForDb.user2.password } }),
   ]);
   const sessionCookie1 = getSessionCookie(authorizationRes1);
   const sessionCookie2 = getSessionCookie(authorizationRes2);

@@ -1,8 +1,7 @@
 
 if tasks.length > 0
   +formFor().justify-content-between.mb-3.form-inline
-    - let n = 8
-    +select(filterForm, 'taskStatuses', 'taskStatusId', n++, true)
-    +select(filterForm, 'executors', 'executorId', n++, true)
-    +select(filterForm, 'labels', 'labels.id', n++, true)
+    +select(filterForm, 'taskStatuses', 'taskStatusId', true)
+    +select(filterForm, 'executors', 'executorId', true)
+    +select(filterForm, 'labels', 'labels.id', true)
     +submit(filterForm).bnt-block

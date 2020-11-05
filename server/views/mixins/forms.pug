@@ -14,7 +14,7 @@ mixin input(entity, propertyName, errors = {})
   .form-group
     label= `${labelName}:`
     input.form-control(
-      name= propertyName
+      name= `form[${propertyName}]`
       type= typeOfInput
       class=`${error ? 'is-invalid' : ''}`
       value= valueOfInput
@@ -30,7 +30,7 @@ mixin select(entity, propertyName, nameOfSelect, isMultiple=false)
   - const labelName = t(`views.${translationPath}.${propertyName}.label`)
   .form-group
     label(for=selectId)= `${labelName}:`
-    select.form-control(id=selectId name=nameOfSelect multiple=isMultiple size='2')
+    select.form-control(id=selectId name=`form[${nameOfSelect}]` multiple=isMultiple size='2')
       for value of values
         if currentTask && +currentTask[nameOfSelect] === +value.id
           option(value=value.id selected)= value.name
@@ -42,7 +42,7 @@ mixin textarea(entity, propertyName)
   - const labelName = t(`views.${translationPath}.${propertyName}.label`)
   label= `${labelName}:`
   .form-group
-    textarea.form-control(type='text' name=propertyName rows='3')
+    textarea.form-control(type='text' name=`form[${propertyName}]` rows='3')
 
 mixin submit(entity)
   - const translationPath = getTranslationPath(entity);

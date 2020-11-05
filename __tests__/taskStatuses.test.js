@@ -25,7 +25,7 @@ describe('Task statuses CRUD', () => {
       .post('/taskStatuses')
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name });
+      .send({ form: { name } });
     expect(res.status).toBe(302);
 
     testTaskStatus = await app
@@ -47,7 +47,7 @@ describe('Task statuses CRUD', () => {
       .patch(`/taskStatuses/${testTaskStatus.id}/edit`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name });
+      .send({ form: { name } });
     expect(res.status).toBe(302);
 
     const newTaskStatusData = await app

@@ -26,7 +26,7 @@ describe('Labels CRUD', () => {
       .post('/labels')
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name });
+      .send({ form: { name } });
     expect(res.status).toBe(302);
 
     testLabel = await app
@@ -49,7 +49,7 @@ describe('Labels CRUD', () => {
       .patch(`/labels/${testLabel.id}/edit`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name });
+      .send({ form: { name } });
     expect(res.status).toBe(302);
 
     const newTestLabelData = await app

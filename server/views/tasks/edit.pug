@@ -5,11 +5,10 @@ block content
     .col
     .col-6
       +formFor(action=route('tasksUpdate', { id: reply.request.params.id }) method='post')
-        - let n = 0
         +input(taskForm, 'name', errors)
-        +select(taskForm, 'taskStatuses', 'taskStatusId', n++)
-        +select(taskForm, 'executors', 'executorId', n++)
-        +select(taskForm, 'labels', 'labels', n++, true)
+        +select(taskForm, 'taskStatuses', 'taskStatusId')
+        +select(taskForm, 'executors', 'executorId')
+        +select(taskForm, 'labels', 'labels', true)
         +textarea(taskForm, 'description')
         +buttonTo(taskForm, 'patch').btn-warning.btn-block
     .col

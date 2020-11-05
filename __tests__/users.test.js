@@ -23,7 +23,7 @@ describe('User "CRUD"', () => {
     const res = await request(app.server)
       .post('/users')
       .type('form')
-      .send(testUser.data);
+      .send({ form: { ...testUser.data } });
     expect(res.status).toBe(302);
   });
   test('User authorization', async () => {
@@ -31,7 +31,7 @@ describe('User "CRUD"', () => {
     const res = await request(app.server)
       .post('/session')
       .type('form')
-      .send({ email, password });
+      .send({ form: { email, password } });
     expect(res.status).toBe(302);
     const sessionCookie = res
       .headers['set-cookie']
@@ -55,7 +55,7 @@ describe('User "CRUD"', () => {
       .patch(`/users/${testUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ password: newPassword, ...otherDataToUpdate });
+      .send({ form: { password: newPassword, ...otherDataToUpdate } });
     expect(res.status).toBe(302);
 
     const { passwordDigest, id, ...newData } = await app
@@ -94,7 +94,7 @@ describe('User "CRUD"', () => {
     const res = await request(app.server)
       .post('/session')
       .type('form')
-      .send({ email, password });
+      .send({ form: { email, password } });
     expect(res.status).toBe(302);
   });
   test('User change other user error', async () => {
@@ -102,7 +102,7 @@ describe('User "CRUD"', () => {
       .patch(`/users/${otherUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ name: 'f' });
+      .send({ form: { name: 'f' } });
     expect(res.status).toBe(403);
   });
   test('User delete', async () => {

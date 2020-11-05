@@ -32,10 +32,12 @@ describe('Test tasks CRUD', () => {
       .set('cookie', mainTestUser.sessionCookie)
       .type('form')
       .send({
-        name,
-        taskStatusId: testTaskStatus.id,
-        executorId: auxiliaryTestUser.id,
-        labels: testLabel.id,
+        form: {
+          name,
+          taskStatusId: testTaskStatus.id,
+          executorId: auxiliaryTestUser.id,
+          labels: testLabel.id,
+        },
       });
     expect(res.status).toBe(302);
 
@@ -58,7 +60,7 @@ describe('Test tasks CRUD', () => {
     const res = await request(app.server)
       .patch(`/tasks/${testTask.id}/edit`)
       .type('form')
-      .send({ name: '', taskStatusId: '' });
+      .send({ form: { name: '', taskStatusId: '' } });
     expect(res.status).toBe(403);
   });
   test('Update task', async () => {
@@ -66,7 +68,7 @@ describe('Test tasks CRUD', () => {
       .patch(`/tasks/${testTask.id}/edit`)
       .set('cookie', mainTestUser.sessionCookie)
       .type('form')
-      .send({ name: testTask.name, taskStatusId: testTaskStatus.id });
+      .send({ form: { name: testTask.name, taskStatusId: testTaskStatus.id } });
     expect(res.status).toBe(302);
     const foundTask = await app
       .objection

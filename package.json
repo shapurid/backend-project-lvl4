@@ -51,6 +51,7 @@
     "pg": "^8.4.2",
     "point-of-view": "^4.6.0",
     "pug": "^3.0.0",
+    "qs": "^6.9.4",
     "rollbar": "^2.19.4"
   },
   "devDependencies": {
