@@ -41,23 +41,22 @@ export default (app) => {
       }
     })
     .patch('/users/:id', { name: 'usersUpdate', preHandler: checkProfileOwnership }, async (req, reply) => {
+      const filteredBody = pickBy(req.body.form, (el) => el.length > 0);
+      const { password, ...otherData } = filteredBody;
+      const bodyWithUpdatedPassword = {
+        ...otherData,
+        ...(password ? { passwordDigest: encrypt(password) } : {}),
+      };
+      const userId = req.session.get('userId');
       try {
-        const filteredBody = pickBy(req.body.form, (el) => el.length > 0);
-        const { password, ...otherData } = filteredBody;
-        const bodyWithUpdatedPassword = {
-          ...otherData,
-          ...(password ? { passwordDigest: encrypt(password) } : {}),
-        };
-        const sessionId = req.session.get('userId');
-        const currentUser = await app.objection.models.user.query().findById(sessionId);
+        const currentUser = await app.objection.models.user.query().findById(userId);
         await currentUser.$query().patch(bodyWithUpdatedPassword);
         req.currentUser = currentUser;
         req.flash('success', i18next.t('flash.users.modify.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
-        const sessionId = req.session.get('userId');
-        const currentUser = await app.objection.models.user.query().findById(sessionId);
+        const currentUser = await app.objection.models.user.query().findById(userId);
         const userForm = { translationPath: 'users.profile', ...req.body.form };
         reply
           .code(422)
@@ -66,20 +65,20 @@ export default (app) => {
       }
     })
     .delete('/users/:id', { name: 'usersDestroy', preHandler: checkProfileOwnership }, async (req, reply) => {
-      const sessionId = req.session.get('userId');
+      const userId = req.session.get('userId');
       const taksCreatorOrExecutor = await app
         .objection
         .models
         .task
         .query()
-        .where('creatorId', sessionId)
-        .orWhere('executorId', sessionId);
+        .where('creatorId', userId)
+        .orWhere('executorId', userId);
       if (!isEmpty(taksCreatorOrExecutor)) {
         req.flash('danger', i18next.t('flash.users.delete.error'));
         reply.redirect(app.reverse('tasks'));
         return reply;
       }
-      await app.objection.models.user.query().deleteById(sessionId);
+      await app.objection.models.user.query().deleteById(userId);
       req.session.set('userId', null);
       req.flash('success', i18next.t('flash.users.delete.success'));
       reply.redirect(app.reverse('root'));

@@ -3,8 +3,7 @@ export const checkSignedIn = (req, reply, done) => {
     reply.forbidden();
     return reply;
   }
-  done();
-  return reply;
+  return done();
 };
 
 export const checkProfileOwnership = (req, reply, done) => {
@@ -13,8 +12,7 @@ export const checkProfileOwnership = (req, reply, done) => {
     reply.forbidden();
     return reply;
   }
-  done();
-  return reply;
+  return done();
 };
 
 export const checkTaskOwnership = (req, reply, done) => {
@@ -23,6 +21,5 @@ export const checkTaskOwnership = (req, reply, done) => {
     reply.forbidden();
     return reply;
   }
-  done();
-  return reply;
+  return done();
 };

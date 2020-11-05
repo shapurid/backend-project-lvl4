@@ -1,7 +1,6 @@
 import i18next from 'i18next';
 import {
   isEmpty,
-  mapValues,
 } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
 
@@ -27,25 +26,21 @@ export default (app) => {
         labels,
       };
       if (!isEmpty(req.query)) {
-        const normalizedQuery = mapValues(req.query, (value) => {
-          if (Array.isArray(value)) {
-            return value.map((el) => Number.parseInt(el, 10));
-          }
-          return [Number.parseInt(value, 10)];
-        });
-        const { taskStatusId, executorId, 'labels.id': labelsId } = normalizedQuery;
+        const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
         if (taskStatusId) {
-          queryTasks.whereIn('taskStatusId', taskStatusId);
+          const normalizedTaskStatusId = [Number.parseInt(taskStatusId, 10)];
+          queryTasks.whereIn('taskStatusId', normalizedTaskStatusId);
         }
         if (executorId) {
-          queryTasks.whereIn('executorId', executorId);
+          const normalizedExecutorId = [Number.parseInt(executorId, 10)];
+          queryTasks.whereIn('executorId', normalizedExecutorId);
         }
         if (labelsId) {
-          queryTasks.whereIn('labels.id', labelsId);
+          const normalizedLabelIds = Array.isArray(labels)
+            ? labels.map((el) => Number.parseInt(el, 10))
+            : [Number.parseInt(labels, 10)];
+          queryTasks.whereIn('labels.id', normalizedLabelIds);
         }
-        const tasks = await queryTasks;
-        reply.render('/tasks/index', { taskForm, tasks, filterForm });
-        return reply;
       }
       const tasks = await queryTasks;
       reply.render('/tasks/index', { taskForm, tasks, filterForm });

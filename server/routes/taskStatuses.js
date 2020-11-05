@@ -15,17 +15,17 @@ export default (app) => {
       return reply;
     })
     .get('/taskStatuses/:id/edit', { name: 'taskStatusesEdit', preHandler: checkSignedIn }, async (req, reply) => {
-      const taskStatusName = await app
+      const taskStatus = await app
         .objection
         .models
         .taskStatus
         .query()
         .findById(req.params.id);
-      if (!taskStatusName) {
+      if (!taskStatus) {
         reply.notFound();
         return reply;
       }
-      const taskStatusForm = { translationPath: 'taskStatuses.edit', ...taskStatusName };
+      const taskStatusForm = { translationPath: 'taskStatuses.edit', ...taskStatus };
       reply.render('/taskStatuses/edit', { taskStatusForm });
       return reply;
     })
