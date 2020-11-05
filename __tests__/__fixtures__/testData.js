@@ -1,43 +1,34 @@
-import dbUser1 from './users/dbUser1.json';
-import dbUser2 from './users/dbUser2.json';
-import testUser from './users/testUser.json';
-import testUserUpdate from './users/testUserUpdate.json';
-import dbTaskStatus from './taskStatuses/dbTaskStatus.json';
-import testTaskStatus from './taskStatuses/testTaskStatus.json';
-import testTaskStatusUpdate from './taskStatuses/testTaskStatusUpdate.json';
-import dbLabel from './labels/dbLabel.json';
-import testLabel from './labels/testLabel.json';
-import testLabelUpdate from './labels/testLabelUpdate.json';
-import dbTask from './tasks/dbTask.json';
-import testTask from './tasks/testTask.json';
-import testTaskUpdate from './tasks/testTaskUpdate.json';
+import users from './users.json';
+import taskStatuses from './taskStatuses.json';
+import labels from './labels.json';
+import tasks from './tasks.json';
 
 export default {
   dataForDb: {
-    user1: dbUser1,
-    user2: dbUser2,
-    taskStatus: dbTaskStatus,
-    label: dbLabel,
-    task: dbTask,
+    user1: users.dbUser1,
+    user2: users.dbUser2,
+    taskStatus: taskStatuses.dbTaskStatus,
+    label: labels.dbLabel,
+    task: tasks.dbTask,
   },
   dataForTests: {
     labels: {
-      create: testLabel,
-      update: testLabelUpdate,
+      create: labels.testLabel,
+      update: labels.testLabelUpdate,
     },
     tasks: {
-      create: testTask,
-      update: testTaskUpdate,
+      create: tasks.testTask,
+      update: tasks.testTaskUpdate,
     },
     taskStatuses: {
-      create: testTaskStatus,
-      update: testTaskStatusUpdate,
+      create: taskStatuses.testTaskStatus,
+      update: taskStatuses.testTaskStatusUpdate,
     },
     users: {
       user: {
-        data: testUser,
+        data: users.testUser,
       },
-      update: testUserUpdate,
+      update: users.testUserUpdate,
     },
   },
 };

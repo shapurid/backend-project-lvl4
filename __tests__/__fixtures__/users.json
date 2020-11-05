@@ -1,0 +1,26 @@
+{
+    "dbUser1": {
+        "firstName": "Gilda",
+        "lastName": "Zieme",
+        "email": "Dillon38@gmail.com",
+        "password": "AFL_T7O4Stq8rWz"
+    },
+    "dbUser2": {
+        "firstName": "Eduardo",
+        "lastName": "Yundt",
+        "email": "Maybell.Murazik@hotmail.com",
+        "password": "TRHK7OqpfEkvYzb"
+    },
+    "testUser": {
+        "firstName": "Jayde",
+        "lastName": "Feil",
+        "email": "Landen_Bauch11@gmail.com",
+        "password": "tFWt0GfUu2NcgXm"
+    },
+    "testUserUpdate": {
+        "firstName": "Robin",
+        "lastName": "Schuppe",
+        "email": "Amber_Jacobi11@yahoo.com",
+        "password": "chVwjyo9Xh0bU0X"
+    }
+}
