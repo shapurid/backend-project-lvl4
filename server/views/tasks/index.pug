@@ -27,7 +27,7 @@ block content
                   a(href=route('userProfile', { id: task.creator.id }))= task.creator.name
                 td
                   if task.executor
-                    a(href=route('userProfile', { id: task.executor.id }))= task.creator.name
+                    a(href=route('userProfile', { id: task.executor.id }))= task.executor.name
                   else
                     .d-flex.justify-content-center —
                 td

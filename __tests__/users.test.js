@@ -4,53 +4,21 @@ import {
   getTestData,
   setApp,
   unsetApp,
-  registerTestUser,
-  createTestTaskStatus,
+  getSettedDataFromDb,
 } from './helpers';
 
 let app;
-let testUserForAuth;
-const data = getTestData('users');
-const guestGetRequests = [
-  [200, '/'],
-  [200, '/users/new'],
-  [200, '/session/new'],
-  [403, '/users'],
-  [403, '/taskStatuses'],
-  [403, '/taskStatuses/new'],
-  [403, '/tasks'],
-  [403, '/tasks/new'],
-  [403, '/labels'],
-  [403, '/labels/new'],
-  [404, '/wrong-path'],
-];
-const authUserGetRequests = guestGetRequests
-  .map(([status, path]) => (status === 403 ? [200, path] : [status, path]));
+let otherUser;
+const testData = getTestData('users');
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  testUserForAuth = await registerTestUser(app);
-  await createTestTaskStatus(app, testUserForAuth.sessionCookie);
+  const dbData = await getSettedDataFromDb(app);
+  otherUser = dbData.user1;
 });
 
-describe('Authorisation tests', () => {
-  describe('Guest requests', () => {
-    test.each(guestGetRequests)('Guest GET %d %p', async (expectedStatus, route) => {
-      const res = await request(app.server).get(route);
-      expect(res.status).toBe(expectedStatus);
-    });
-  });
-  describe('Authorized user requests', () => {
-    test.each(authUserGetRequests)('Authorized user GET %d %p', async (expectedStatus, route) => {
-      const res = await request(app.server)
-        .get(route)
-        .set('cookie', testUserForAuth.sessionCookie);
-      expect(res.status).toBe(expectedStatus);
-    });
-  });
-});
 describe('User "CRUD"', () => {
-  let testUser = data.user;
+  let testUser = testData.user;
   test('Create new user', async () => {
     const res = await request(app.server)
       .post('/users')
@@ -82,7 +50,7 @@ describe('User "CRUD"', () => {
     expect(res.status).toBe(200);
   });
   test('User change yourself', async () => {
-    const { password: newPassword, ...otherDataToUpdate } = data.dataToUpdate;
+    const { password: newPassword, ...otherDataToUpdate } = testData.update;
     const res = await request(app.server)
       .patch(`/users/${testUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
@@ -130,13 +98,11 @@ describe('User "CRUD"', () => {
     expect(res.status).toBe(302);
   });
   test('User change other user error', async () => {
-    const otherUser = await registerTestUser(app);
-    const { newData } = data;
     const res = await request(app.server)
       .patch(`/users/${otherUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({ ...newData });
+      .send({ name: 'f' });
     expect(res.status).toBe(403);
   });
   test('User delete', async () => {

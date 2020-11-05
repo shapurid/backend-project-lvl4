@@ -66,22 +66,6 @@ const setUpViews = (app) => {
   });
 };
 
-const setUpErrorHandlers = (app) => {
-  app
-    .register(fastifySensible)
-    .after(() => app.setErrorHandler((err, req, reply) => {
-      const { statusCode } = err;
-      if (statusCode) {
-        reply
-          .code(statusCode)
-          .render(`/errors/${statusCode}`);
-        return reply;
-      }
-      rollbar.log(err);
-      return reply;
-    }));
-};
-
 const setupLocalization = () => i18next
   .init({
     lng: 'ru',
@@ -109,6 +93,19 @@ const registerPlugins = (app) => {
   });
   app.register(fastifyFlash);
   app.register(fastifyReverseRoutes.plugin);
+  app
+    .register(fastifySensible)
+    .after(() => app.setErrorHandler((err, req, reply) => {
+      const { statusCode } = err;
+      if (statusCode) {
+        reply
+          .code(statusCode)
+          .render(`/errors/${statusCode}`);
+        return reply;
+      }
+      rollbar.log(err);
+      return reply;
+    }));
 };
 
 const addHooks = (app) => {
@@ -138,7 +135,6 @@ export default () => {
     },
   });
   registerPlugins(app);
-  setUpErrorHandlers(app);
   setupLocalization();
   setUpViews(app);
   setUpStaticAssets(app);

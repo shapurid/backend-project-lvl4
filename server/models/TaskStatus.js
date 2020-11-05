@@ -13,8 +13,16 @@ export default class TaskStatus extends unique(Model) {
       type: 'object',
       required: ['name'],
       properties: {
-        id: { type: 'integer' },
-        name: { type: 'string', minLength: 1 },
+        id: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: 2147483647,
+        },
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 255,
+        },
       },
     };
   }

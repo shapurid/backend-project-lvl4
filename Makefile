@@ -4,10 +4,10 @@ setup:
 build:
 	npm run build
 
-set-db:
+migrate:
 	npx knex migrate:latest
 
-update-db:
+rebuild:
 	rm -rf database.sqlite && make set-db
 
 start:
@@ -25,5 +25,5 @@ test:
 lint:
 	npx eslint .
 
-fix:
+lint-fix:
 	npx eslint . --fix

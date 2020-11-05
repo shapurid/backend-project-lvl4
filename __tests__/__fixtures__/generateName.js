@@ -1,3 +1,0 @@
-import faker from 'faker';
-
-export default () => faker.lorem.word();

@@ -33,12 +33,7 @@ export default (app) => {
         return reply;
       } catch ({ data }) {
         const registrationForm = { entityName: 'users.new', ...req.body };
-        const isEmailUniqError = data.email
-          ? data.email.some((el) => el.keyword === 'unique')
-          : false;
-        if (isEmailUniqError) {
-          req.flash('danger', i18next.t('flash.users.create.error'));
-        }
+        req.flash('danger', i18next.t('flash.users.create.error'));
         reply
           .code(422)
           .render('/users/new', { errors: data, registrationForm });
@@ -50,8 +45,10 @@ export default (app) => {
         const { _method, ...body } = req.body;
         const filteredBody = pickBy(body, (el) => el.length > 0);
         const { password, ...otherData } = filteredBody;
-        const pass = password ? { passwordDigest: encrypt(password) } : {};
-        const bodyWithUpdatedPassword = { ...otherData, ...pass };
+        const bodyWithUpdatedPassword = {
+          ...otherData,
+          ...(password ? { passwordDigest: encrypt(password) } : {}),
+        };
         const sessionId = req.session.get('userId');
         const currentUser = await app.objection.models.user.query().findById(sessionId);
         await currentUser.$query().patch(bodyWithUpdatedPassword);

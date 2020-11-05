@@ -1,7 +1,5 @@
 import { Model } from 'objection';
-import User from './User';
-import TaskStatus from './TaskStatus';
-import Label from './Label';
+import { join } from 'path';
 
 export default class Task extends Model {
   static get tableName() {
@@ -13,12 +11,35 @@ export default class Task extends Model {
       type: 'object',
       required: ['name', 'taskStatusId', 'creatorId'],
       properties: {
-        id: { type: 'integer' },
-        name: { type: 'string', minLength: 1 },
-        description: { type: ['string', 'null'] },
-        taskStatusId: { type: 'integer' },
-        creatorId: { type: 'integer' },
-        executorId: { type: ['integer', 'null'] },
+        id: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: +2147483647,
+        },
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 255,
+        },
+        description: {
+          type: ['string', 'null'],
+          maxLength: 255,
+        },
+        taskStatusId: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: 2147483647,
+        },
+        creatorId: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: 2147483647,
+        },
+        executorId: {
+          type: ['integer', 'null'],
+          minimum: -2147483648,
+          maximum: +2147483647,
+        },
       },
     };
   }
@@ -27,7 +48,7 @@ export default class Task extends Model {
     return {
       taskStatus: {
         relation: Model.BelongsToOneRelation,
-        modelClass: TaskStatus,
+        modelClass: join(__dirname, 'TaskStatus'),
         join: {
           from: 'tasks.taskStatusId',
           to: 'task_statuses.id',
@@ -35,7 +56,7 @@ export default class Task extends Model {
       },
       creator: {
         relation: Model.BelongsToOneRelation,
-        modelClass: User,
+        modelClass: join(__dirname, 'User'),
         join: {
           from: 'tasks.creatorId',
           to: 'users.id',
@@ -43,7 +64,7 @@ export default class Task extends Model {
       },
       executor: {
         relation: Model.BelongsToOneRelation,
-        modelClass: User,
+        modelClass: join(__dirname, 'User'),
         join: {
           from: 'tasks.executorId',
           to: 'users.id',
@@ -51,7 +72,7 @@ export default class Task extends Model {
       },
       labels: {
         relation: Model.ManyToManyRelation,
-        modelClass: Label,
+        modelClass: join(__dirname, 'Label'),
         join: {
           from: 'tasks.id',
           through: {

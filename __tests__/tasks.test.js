@@ -4,9 +4,7 @@ import {
   getTestData,
   setApp,
   unsetApp,
-  registerTestUser,
-  createTestTaskStatus,
-  createTestLabel,
+  getSettedDataFromDb,
 } from './helpers';
 
 let app;
@@ -14,26 +12,21 @@ let mainTestUser;
 let auxiliaryTestUser;
 let testLabel;
 let testTaskStatus;
-const data = getTestData('tasks');
+const testData = getTestData('tasks');
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  mainTestUser = await registerTestUser(app);
-  [
-    auxiliaryTestUser,
-    testTaskStatus,
-    testLabel,
-  ] = await Promise.all([
-    registerTestUser(app),
-    createTestTaskStatus(app, mainTestUser.sessionCookie),
-    createTestLabel(app, mainTestUser.sessionCookie),
-  ]);
+  const dbData = await getSettedDataFromDb(app);
+  mainTestUser = dbData.user1;
+  auxiliaryTestUser = dbData.user2;
+  testLabel = dbData.label;
+  testTaskStatus = dbData.taskStatus;
 });
 
 describe('Test tasks CRUD', () => {
   let testTask;
   test('Create new task', async () => {
-    const { name } = data.create;
+    const { name } = testData.create;
     const res = await request(app.server)
       .post('/tasks')
       .set('cookie', mainTestUser.sessionCookie)
@@ -46,14 +39,14 @@ describe('Test tasks CRUD', () => {
       });
     expect(res.status).toBe(302);
 
-    const foundedTask = await app
+    const foundTask = await app
       .objection
       .models
       .task
       .query()
       .findOne({ name });
 
-    testTask = await foundedTask.$query().withGraphJoined('[taskStatus, creator, executor, labels]');
+    testTask = await foundTask.$query().withGraphJoined('[taskStatus, creator, executor, labels]');
   });
   test('Read tasks', async () => {
     const res = await request(app.server)
@@ -75,16 +68,16 @@ describe('Test tasks CRUD', () => {
       .type('form')
       .send({ name: testTask.name, taskStatusId: testTaskStatus.id });
     expect(res.status).toBe(302);
-    const foundedTask = await app
+    const foundTask = await app
       .objection
       .models
       .task
       .query()
       .findOne({ name: testTask.name });
-    expect(foundedTask).not.toEqual(testTask);
-    testTask = foundedTask;
+    expect(foundTask).not.toEqual(testTask);
+    testTask = foundTask;
   });
-  test('Delete task err1', async () => {
+  test('Delete task error', async () => {
     const res = await request(app.server)
       .delete(`/tasks/u${testTask.creatorId}/${testTask.id}`)
       .set('cookie', auxiliaryTestUser.sessionCookie);

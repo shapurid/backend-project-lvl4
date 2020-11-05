@@ -10,8 +10,16 @@ export default class TaskLabel extends Model {
       type: 'object',
       required: ['taskId', 'labelId'],
       properties: {
-        taskId: { type: 'integer' },
-        labelId: { type: 'integer' },
+        taskId: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: 2147483647,
+        },
+        labelId: {
+          type: 'integer',
+          minimum: -2147483648,
+          maximum: 2147483647,
+        },
       },
     };
   }

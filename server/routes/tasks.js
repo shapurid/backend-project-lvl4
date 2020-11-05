@@ -34,8 +34,19 @@ export default (app) => {
           .task
           .query()
           .withGraphJoined('[taskStatus, creator, executor, labels]')
-          .where((builder) => mapValues(normalizedQuery,
-            (value, key) => builder.whereIn(key, value)));
+          .where((builder) => {
+            const { taskStatusId, executorId, 'labels.id': labelsId } = normalizedQuery;
+            if (taskStatusId) {
+              builder.whereIn('taskStatusId', taskStatusId);
+            }
+            if (executorId) {
+              builder.whereIn('executorId', executorId);
+            }
+            if (labelsId) {
+              builder.whereIn('labels.id', labelsId);
+            }
+            return builder;
+          });
         reply.render('/tasks/index', { taskForm, tasks, filterForm });
         return reply;
       }
@@ -69,14 +80,14 @@ export default (app) => {
       return reply;
     })
     .get('/tasks/:id/edit', { name: 'taskProfile', preHandler: checkSignedIn }, async (req, reply) => {
-      const foundedTask = await app
+      const foundTask = await app
         .objection
         .models
         .task
         .query()
         .findById(req.params.id)
         .withGraphJoined('[labels]');
-      if (!foundedTask) {
+      if (!foundTask) {
         reply.notFound();
         return reply;
       }
@@ -87,7 +98,7 @@ export default (app) => {
       ]);
       const taskForm = {
         entityName: 'tasks.edit',
-        currentTask: foundedTask,
+        currentTask: foundTask,
         taskStatuses,
         executors,
         labels,
@@ -112,10 +123,15 @@ export default (app) => {
           const normalizedLabelIds = Array.isArray(labels)
             ? labels.map((el) => Number.parseInt(el, 10))
             : [Number.parseInt(labels, 10)];
-          const tags = await app.objection.models.label.query().findByIds(normalizedLabelIds);
+          const foundLabels = await app
+            .objection
+            .models
+            .label
+            .query()
+            .findByIds(normalizedLabelIds);
           await app.objection.models.task.query().insertGraph({
             ...task,
-            labels: tags,
+            labels: foundLabels,
           }, { relate: true });
         } else {
           await app.objection.models.task.query().insert(task);
@@ -136,6 +152,7 @@ export default (app) => {
           labels,
           currentTask: req.body,
         };
+        req.flash('success', i18next.t('flash.tasks.create.error'));
         reply
           .code(422)
           .render('/tasks/new', { taskForm, errors: data });
@@ -159,10 +176,15 @@ export default (app) => {
           const normalizedLabelIds = Array.isArray(labels)
             ? labels.map((el) => Number.parseInt(el, 10))
             : [Number.parseInt(labels, 10)];
-          const tags = await app.objection.models.label.query().findByIds(normalizedLabelIds);
+          const foundLabels = await app
+            .objection
+            .models
+            .label
+            .query()
+            .findByIds(normalizedLabelIds);
           await app.objection.models.task.query().upsertGraph({
             ...currentTask,
-            labels: tags,
+            labels: foundLabels,
           }, { relate: true, unrelate: true });
         } else {
           await currentTask.$relatedQuery('labels').unrelate();
@@ -183,6 +205,7 @@ export default (app) => {
           labels,
           currentTask: req.body,
         };
+        req.flash('success', i18next.t('flash.tasks.modify.error'));
         reply
           .code(422)
           .render('/tasks/edit', { taskForm, errors: data });
@@ -191,7 +214,7 @@ export default (app) => {
     })
     .delete('/tasks/u:creatorId/:id', { name: 'deleteTask', preHandler: checkTaskOwnership }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
-      await task.$relatedQuery('labels');
+      await task.$relatedQuery('labels').unrelate();
       await task.$query().delete();
       req.flash('success', i18next.t('flash.tasks.delete.success'));
       reply.redirect(app.reverse('tasks'));

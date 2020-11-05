@@ -38,12 +38,7 @@ export default (app) => {
         return reply;
       } catch ({ data }) {
         const taskStatusForm = { entityName: 'taskStatuses.new' };
-        const isNameUniqError = data.name
-          ? data.name.some((el) => el.keyword === 'unique')
-          : false;
-        if (isNameUniqError) {
-          req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
-        }
+        req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
         reply
           .code(422)
           .render('/taskStatuses/new', { taskStatusForm, errors: data });
@@ -59,6 +54,10 @@ export default (app) => {
         return reply;
       }
       const status = await app.objection.models.taskStatus.query().findById(req.params.id);
+      if (!status) {
+        reply.notFound();
+        return reply;
+      }
       await status.$query().patch({ name });
       req.flash('success', i18next.t('flash.taskStatuses.modify.success'));
       reply.redirect(app.reverse('taskStatuses'));

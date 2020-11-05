@@ -1,9 +1,16 @@
 import request from 'supertest';
-import generateUserData from './__fixtures__/generateUserData';
-import generateName from './__fixtures__/generateName';
 import testData from './__fixtures__/testData';
 
-export const getTestData = (key) => testData[key];
+const { dataForTests, dataForDb } = testData;
+
+export const getTestData = (key) => dataForTests[key];
+
+const getSessionCookie = (res) => {
+  const sessionCookieAndPath = res.headers['set-cookie'];
+  const sessionCookieAndPathToString = sessionCookieAndPath.join();
+  const separateSessionCookieFromPath = sessionCookieAndPathToString.split(';').slice(0, 1);
+  return separateSessionCookieFromPath.join();
+};
 
 export const setApp = async (appGetter) => {
   const app = await appGetter().ready();
@@ -12,7 +19,61 @@ export const setApp = async (appGetter) => {
     .knex
     .migrate
     .latest();
+  const [insertedUser1, insertedTaskStatus, insertedLabel] = await Promise.all([
+    app.objection.models.user.query().insert(dataForDb.user1),
+    app.objection.models.taskStatus.query().insert(dataForDb.taskStatus),
+    app.objection.models.label.query().insert(dataForDb.label),
+  ]);
+  const insertedUser2 = await app.objection.models.user.query().insert(dataForDb.user2);
+  await app.objection.models.task.query().insertGraph({
+    creatorId: insertedUser1.id,
+    executorId: insertedUser2.id,
+    taskStatusId: insertedTaskStatus.id,
+    labels: insertedLabel,
+    ...dataForDb.task,
+  }, { relate: true });
   return app;
+};
+
+export const getSettedDataFromDb = async (app) => {
+  const [
+    insertedUser1,
+    insertedUser2,
+    insertedTaskStatus,
+    insertedLabel,
+    insertedTask,
+    authorizationRes1,
+    authorizationRes2,
+  ] = await Promise.all([
+    app.objection.models.user.query().findOne({ email: dataForDb.user1.email }),
+    app.objection.models.user.query().findOne({ email: dataForDb.user2.email }),
+    app.objection.models.taskStatus.query().findOne(dataForDb.taskStatus),
+    app.objection.models.label.query().findOne(dataForDb.label),
+    app.objection.models.task.query().findOne(dataForDb.task),
+    request(app.server).post('/session').type('form').send({ email: dataForDb.user1.email, password: dataForDb.user1.password }),
+    request(app.server).post('/session').type('form').send({ email: dataForDb.user2.email, password: dataForDb.user2.password }),
+  ]);
+  const sessionCookie1 = getSessionCookie(authorizationRes1);
+  const sessionCookie2 = getSessionCookie(authorizationRes2);
+  return {
+    user1: {
+      data: {
+        ...insertedUser1,
+        password: dataForDb.user1.password,
+      },
+      sessionCookie: sessionCookie1,
+    },
+    user2: {
+      data: {
+        ...insertedUser2,
+        password: dataForDb.user2.password,
+      },
+      sessionCookie: sessionCookie2,
+    },
+    taskStatus: insertedTaskStatus,
+    label: insertedLabel,
+    task: insertedTask,
+  };
 };
 
 export const unsetApp = async (app) => {
@@ -21,83 +82,4 @@ export const unsetApp = async (app) => {
     .knex
     .destroy();
   await app.close();
-};
-
-export const registerTestUser = async (app) => {
-  const user = generateUserData();
-  const creationRes = await request(app.server)
-    .post('/users')
-    .type('form')
-    .send(user);
-  expect(creationRes.status).toBe(302);
-
-  const authorizationRes = await request(app.server)
-    .post('/session')
-    .type('form')
-    .send({ email: user.email, password: user.password });
-  expect(authorizationRes.status).toBe(302);
-
-  const sessionCookie = authorizationRes
-    .headers['set-cookie']
-    .join()
-    .split(';')
-    .slice(0, 1)
-    .join();
-  const { id } = await app.objection.models.user.query().findOne({ email: user.email });
-
-  return { data: { id, ...user }, sessionCookie };
-};
-
-export const createTestTaskStatus = async (app, sessionCookie) => {
-  const name = generateName();
-  const addTaskStatus = await request(app.server)
-    .post('/taskStatuses')
-    .set('cookie', sessionCookie)
-    .type('form')
-    .send({ name });
-  expect(addTaskStatus.status).toBe(302);
-
-  const taskStatus = await app
-    .objection
-    .models
-    .taskStatus
-    .query()
-    .findOne({ name });
-  return taskStatus;
-};
-
-export const createTestTask = async (app, sessionCookie, taskStatusId) => {
-  const name = generateName();
-  const res = await request(app.server)
-    .post('/tasks')
-    .set('cookie', sessionCookie)
-    .type('form')
-    .send({ name, taskStatusId });
-  expect(res.status).toBe(302);
-
-  const task = await app
-    .objection
-    .models
-    .task
-    .query()
-    .findOne({ name });
-  return task;
-};
-
-export const createTestLabel = async (app, sessionCookie) => {
-  const name = generateName();
-  const res = await request(app.server)
-    .post('/labels')
-    .set('cookie', sessionCookie)
-    .type('form')
-    .send({ name });
-  expect(res.status).toBe(302);
-
-  const testLabel = await app
-    .objection
-    .models
-    .label
-    .query()
-    .findOne({ name });
-  return testLabel;
 };

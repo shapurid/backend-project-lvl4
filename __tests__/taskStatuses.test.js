@@ -4,22 +4,23 @@ import {
   getTestData,
   setApp,
   unsetApp,
-  registerTestUser,
+  getSettedDataFromDb,
 } from './helpers';
 
 let app;
 let testUser;
-const data = getTestData('taskStatuses');
+const testData = getTestData('taskStatuses');
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  testUser = await registerTestUser(app);
+  const dbData = await getSettedDataFromDb(app);
+  testUser = dbData.user1;
 });
 
 describe('Task statuses CRUD', () => {
   let testTaskStatus;
   test('Create new task status', async () => {
-    const { name } = data.create;
+    const { name } = testData.create;
     const res = await request(app.server)
       .post('/taskStatuses')
       .set('cookie', testUser.sessionCookie)
@@ -41,7 +42,7 @@ describe('Task statuses CRUD', () => {
     expect(res.status).toBe(200);
   });
   test('Update task status', async () => {
-    const { name } = data.update;
+    const { name } = testData.update;
     const res = await request(app.server)
       .patch(`/taskStatuses/${testTaskStatus.id}/edit`)
       .set('cookie', testUser.sessionCookie)

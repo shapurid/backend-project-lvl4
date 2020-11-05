@@ -23,12 +23,7 @@ export default (app) => {
         return reply;
       } catch ({ data }) {
         const labelsForm = { entityName: 'labels.new' };
-        const isNameUniqError = data.name
-          ? data.name.some((el) => el.keyword === 'unique')
-          : false;
-        if (isNameUniqError) {
-          req.flash('danger', i18next.t('flash.labels.create.error'));
-        }
+        req.flash('danger', i18next.t('flash.labels.create.error'));
         reply
           .code(422)
           .render('/labels/new', { labelsForm, errors: data });
@@ -60,12 +55,7 @@ export default (app) => {
         return reply;
       } catch ({ data }) {
         const labelsForm = { entityName: 'label.edit', ...req.body };
-        const isNameUniqError = data.name
-          ? data.name.some((el) => el.keyword === 'unique')
-          : false;
-        if (isNameUniqError) {
-          req.flash('danger', i18next.t('flash.labels.modify.error'));
-        }
+        req.flash('danger', i18next.t('flash.labels.modify.error'));
         reply
           .code(422)
           .render('/labels/edit', { labelsForm, errors: data });
