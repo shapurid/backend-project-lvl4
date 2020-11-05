@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      +formFor(action=route('editLabel', { id: reply.request.params.id }) method='post')
+      +formFor(action=route('labelsUpdate', { id: reply.request.params.id }) method='post')
         +input(labelsForm, 'name', errors)
         +buttonTo(labelsForm, 'patch').btn-warning.btn-block
     .col

@@ -5,7 +5,7 @@ block content
     .col
     .col-5
       h3.mb-4 Регистрация
-      +formFor(action=route('createUser') method='post')
+      +formFor(action=route('usersCreate') method='post')
         +input(registrationForm, 'firstName', errors)
         +input(registrationForm, 'lastName', errors)
         +input(registrationForm, 'email', errors)

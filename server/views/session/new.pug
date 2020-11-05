@@ -5,7 +5,7 @@ block content
     .col
     .col-5
       h3.mb-4= t('views.session.new.signIn')
-      +formFor(action=route('createSession') method='post')
+      +formFor(action=route('sessionCreate') method='post')
         +input(signInForm, 'email')
         +input(signInForm, 'password')
         +submit(signInForm).btn-block    

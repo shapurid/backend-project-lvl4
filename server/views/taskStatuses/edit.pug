@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      +formFor(action=route('editTaskStatus', { id: reply.request.params.id }) method='post')
+      +formFor(action=route('taskStatusesUpdate', { id: reply.request.params.id }) method='post')
         +input(taskStatusForm, 'name', errors)
         +buttonTo(taskStatusForm, 'patch').btn-warning.btn-block
     .col

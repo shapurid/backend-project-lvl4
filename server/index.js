@@ -13,6 +13,7 @@ import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
 import Rollbar from 'rollbar';
 import i18next from 'i18next';
+import { parse } from 'querystring';
 import getHelpers from './helpers/index';
 import ru from './locales/ru';
 import webpackConfig from '../webpack.config';
@@ -82,7 +83,14 @@ const registerPlugins = (app) => {
     models,
   });
   app.register(fastifyMethodOverride);
-  app.register(fastifyFormBody);
+  app.register(fastifyFormBody, {
+    parser: (str) => {
+      const { _method, ...parsedQueryString } = parse(str);
+      return _method
+        ? { _method, form: parsedQueryString }
+        : { form: parsedQueryString };
+    },
+  });
   app.register(fastifySecureSession, {
     cookieName: 'session-cookie',
     secret,

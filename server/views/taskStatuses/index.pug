@@ -19,8 +19,8 @@ block content
               td= taskStatus.name
               td
                 .d-flex.justify-content-end
-                  a.btn.btn-outline-info.mr-2(href=route('taskStatusProfile', { id: taskStatus.id }))= t('views.taskStatuses.index.edit')
-                  +formFor(action=route('deleteTaskStatus', { id: taskStatus.id }) method='post')
+                  a.btn.btn-outline-info.mr-2(href=route('taskStatusesEdit', { id: taskStatus.id }))= t('views.taskStatuses.index.edit')
+                  +formFor(action=route('taskStatusesDestroy', { id: taskStatus.id }) method='post')
                     +buttonTo(taskStatusForm, 'delete').btn-danger
-      a.btn.btn-dark.btn-block(href=route('newTaskStatus'))= t('views.taskStatuses.index.new')
+      a.btn.btn-dark.btn-block(href=route('taskStatusesNew'))= t('views.taskStatuses.index.new')
     .col

@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      +formFor(action=route('createLabel') method='post')
+      +formFor(action=route('labelsCreate') method='post')
         +input(labelsForm, 'name', errors)
         +submit(labelsForm).btn-block
     .col

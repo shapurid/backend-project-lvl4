@@ -11,12 +11,12 @@ block content
         li.list-group-item= `${t('views.users.profile.email.label')}: '${email}'`
       - const id = reply.request.currentUser.id
       if reply.request.signedIn && id === +reply.request.params.id
-        +formFor(action=route('editUser', { id }) method='post')
+        +formFor(action=route('usersUpdate', { id }) method='post')
           +input(userForm, 'firstName', errors)
           +input(userForm, 'lastName', errors)
           +input(userForm, 'email', errors)
           +input(userForm, 'password', errors)(minLength = '3')
           +buttonTo(userForm, 'patch').btn-warning.btn-block.mb-3
-        +formFor(action=route('deleteUser', { id }) method='post')
+        +formFor(action=route('usersDestroy', { id }) method='post')
           +buttonTo(userForm, 'delete').btn-danger.btn-block
     .col

@@ -24,10 +24,10 @@ block content
                 td= task.name
                 td= task.taskStatus.name
                 td
-                  a(href=route('userProfile', { id: task.creator.id }))= task.creator.name
+                  a(href=route('usersShow', { id: task.creator.id }))= task.creator.name
                 td
                   if task.executor
-                    a(href=route('userProfile', { id: task.executor.id }))= task.executor.name
+                    a(href=route('usersShow', { id: task.executor.id }))= task.executor.name
                   else
                     .d-flex.justify-content-center —
                 td
@@ -38,9 +38,9 @@ block content
                 td
                   .d-flex.justify-content-end
                     if reply.request.currentUser.id === task.creatorId
-                      +formFor(action=route('deleteTask', { creatorId: task.creatorId, id: task.id }), method='post')
+                      +formFor(action=route('tasksDestroy', { creatorId: task.creatorId, id: task.id }), method='post')
                         +buttonTo(taskForm, 'delete').btn-danger
-                    a.btn.btn-outline-info.ml-2.btn-sm(href=route('taskProfile', { id: task.id }))= t('views.tasks.index.edit')
+                    a.btn.btn-outline-info.ml-2.btn-sm(href=route('tasksEdit', { id: task.id }))= t('views.tasks.index.edit')
               tr
                 if task.labels.length > 0
                   td(colspan="7")
@@ -49,5 +49,5 @@ block content
               tr
                 if task.description
                   td.collapse(id=`collapse${n}` colspan="7")= task.description
-      a.btn.btn-dark.btn-block(href=route('newTask'))= t('views.tasks.index.add')
+      a.btn.btn-dark.btn-block(href=route('tasksNew'))= t('views.tasks.index.add')
     .col

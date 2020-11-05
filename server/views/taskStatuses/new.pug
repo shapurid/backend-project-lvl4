@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      +formFor(action=route('createTaskStatus') method='post')
+      +formFor(action=route('taskStatusesCreate') method='post')
         +input(taskStatusForm, 'name', errors)
         +submit(taskStatusForm).btn-block
     .col

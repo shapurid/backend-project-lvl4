@@ -3,18 +3,18 @@ import { checkSignedIn } from '../lib/preHandlers';
 
 export default (app) => {
   app
-    .get('/taskStatuses', { name: 'taskStatuses', preHandler: checkSignedIn }, async (req, reply) => {
-      const taskStatusForm = { entityName: 'taskStatuses.index' };
+    .get('/taskStatuses', { name: 'taskStatusesIndex', preHandler: checkSignedIn }, async (req, reply) => {
+      const taskStatusForm = { translationPath: 'taskStatuses.index' };
       const statusList = await app.objection.models.taskStatus.query();
       reply.render('/taskStatuses/index', { taskStatusForm, statusList });
       return reply;
     })
-    .get('/taskStatuses/new', { name: 'newTaskStatus', preHandler: checkSignedIn }, (req, reply) => {
-      const taskStatusForm = { entityName: 'taskStatuses.new' };
+    .get('/taskStatuses/new', { name: 'taskStatusesNew', preHandler: checkSignedIn }, (req, reply) => {
+      const taskStatusForm = { translationPath: 'taskStatuses.new' };
       reply.render('/taskStatuses/new', { taskStatusForm });
       return reply;
     })
-    .get('/taskStatuses/:id/edit', { name: 'taskStatusProfile', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/taskStatuses/:id/edit', { name: 'taskStatusesEdit', preHandler: checkSignedIn }, async (req, reply) => {
       const taskStatusName = await app
         .objection
         .models
@@ -25,19 +25,19 @@ export default (app) => {
         reply.notFound();
         return reply;
       }
-      const taskStatusForm = { entityName: 'taskStatuses.edit', ...taskStatusName };
+      const taskStatusForm = { translationPath: 'taskStatuses.edit', ...taskStatusName };
       reply.render('/taskStatuses/edit', { taskStatusForm });
       return reply;
     })
-    .post('/taskStatuses', { name: 'createTaskStatus', preHandler: checkSignedIn }, async (req, reply) => {
+    .post('/taskStatuses', { name: 'taskStatusesCreate', preHandler: checkSignedIn }, async (req, reply) => {
       try {
-        const status = await app.objection.models.taskStatus.fromJson(req.body);
+        const status = await app.objection.models.taskStatus.fromJson(req.body.form);
         await app.objection.models.taskStatus.query().insert(status);
         req.flash('success', i18next.t('flash.taskStatuses.create.success'));
-        reply.redirect(app.reverse('taskStatuses'));
+        reply.redirect(app.reverse('taskStatusesIndex'));
         return reply;
       } catch ({ data }) {
-        const taskStatusForm = { entityName: 'taskStatuses.new' };
+        const taskStatusForm = { translationPath: 'taskStatuses.new' };
         req.flash('danger', i18next.t('flash.taskStatuses.create.error'));
         reply
           .code(422)
@@ -45,8 +45,8 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/taskStatuses/:id/edit', { name: 'editTaskStatus', preHandler: checkSignedIn }, async (req, reply) => {
-      const { name } = req.body;
+    .patch('/taskStatuses/:id/edit', { name: 'taskStatusesUpdate', preHandler: checkSignedIn }, async (req, reply) => {
+      const { name } = req.body.form;
       if (!name) {
         reply
           .code(422)
@@ -60,10 +60,10 @@ export default (app) => {
       }
       await status.$query().patch({ name });
       req.flash('success', i18next.t('flash.taskStatuses.modify.success'));
-      reply.redirect(app.reverse('taskStatuses'));
+      reply.redirect(app.reverse('taskStatusesIndex'));
       return reply;
     })
-    .delete('/taskStatuses/:id', { name: 'deleteTaskStatus', preHandler: checkSignedIn }, async (req, reply) => {
+    .delete('/taskStatuses/:id', { name: 'taskStatusesDestroy', preHandler: checkSignedIn }, async (req, reply) => {
       const normalizedId = Number.parseInt(req.params.id, 10);
       const relatedTask = await app
         .objection
@@ -73,12 +73,12 @@ export default (app) => {
         .findOne({ taskStatusId: normalizedId });
       if (relatedTask) {
         req.flash('danger', i18next.t('flash.taskStatuses.delete.error'));
-        reply.redirect(app.reverse('taskStatuses'));
+        reply.redirect(app.reverse('taskStatusesIndex'));
         return reply;
       }
       await app.objection.models.taskStatus.query().deleteById(normalizedId);
       req.flash('success', i18next.t('flash.taskStatuses.delete.success'));
-      reply.redirect(app.reverse('taskStatuses'));
+      reply.redirect(app.reverse('taskStatusesIndex'));
       return reply;
     });
 };

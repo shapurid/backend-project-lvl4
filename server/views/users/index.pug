@@ -23,5 +23,5 @@ block content
               td
                if reply.request.signedIn
                 .d-flex
-                  a.btn.btn-outline-info.ml-auto(href=route('userProfile', { id: user.id }))= t('views.users.index.watchProfile')
+                  a.btn.btn-outline-info.ml-auto(href=route('usersShow', { id: user.id }))= t('views.users.index.watchProfile')
     .col

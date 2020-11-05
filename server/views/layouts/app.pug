@@ -13,27 +13,27 @@ html
         if reply.request.signedIn
           ul.navbar-nav
             li.nav-item.active
-              a.nav-link(href=route('users'))= t('layouts.app.users')
+              a.nav-link(href=route('usersIndex'))= t('layouts.app.users')
           ul.navbar-nav
             li.nav-item.dropdown
               a.nav-link.dropdown-toggle(href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Задачи
               .dropdown-menu(aria-labelledby="navbarDropdown")
-                a.dropdown-item(href=route('tasks'))= t('layouts.app.tasks')
-                a.dropdown-item(href=route('taskStatuses'))= t('layouts.app.taskStatuses')
-                a.dropdown-item(href=route('labels'))= t('layouts.app.labels')
+                a.dropdown-item(href=route('tasksIndex'))= t('layouts.app.tasks')
+                a.dropdown-item(href=route('taskStatusesIndex'))= t('layouts.app.taskStatuses')
+                a.dropdown-item(href=route('labelsIndex'))= t('layouts.app.labels')
           ul.navbar-nav.ml-auto
             li.nav-item.active
               a.nav-link(href=`/users/${reply.request.currentUser.id}`)= t('layouts.app.own')
             li.nav-item
-              form.form-inline(action=route('deleteSession') method='post')
+              form.form-inline(action=route('sessionDestroy') method='post')
                 input(type="hidden" name="_method" value="DELETE")
                 button.btn.btn-outline-danger(type="submit")= t('layouts.app.signOut')
         else
           ul.navbar-nav.ml-auto
             li.nav-item
-              a.btn.btn-light.mr-2(href=route('newSession'))= t('layouts.app.signIn')
+              a.btn.btn-light.mr-2(href=route('sessionNew'))= t('layouts.app.signIn')
             li.nav-item
-              a.btn.btn-outline-primary(href=route('newUser'))= t('layouts.app.signUp')
+              a.btn.btn-outline-primary(href=route('usersNew'))= t('layouts.app.signUp')
     - const flashMessage = reply.flash();
     if flashMessage
      each message, typeOfMessage in flashMessage

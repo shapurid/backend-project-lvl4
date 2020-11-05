@@ -4,7 +4,7 @@ block content
   .row
     .col
     .col-6
-      +formFor(action=route('createTask') method='post')
+      +formFor(action=route('tasksCreate') method='post')
         - let n = 0
         +input(taskForm, 'name', errors)
         +select(taskForm, 'taskStatuses', 'taskStatusId', n++)

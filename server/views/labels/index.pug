@@ -19,8 +19,8 @@ block content
                 td= label.name
                 td
                   .d-flex.justify-content-end
-                    a.btn.btn-outline-info.mr-2(href=route('labelProfile', { id: label.id }))= t('views.labels.index.edit')
-                    +formFor(action=route('deleteLabel', { id: label.id }), method='post')
+                    a.btn.btn-outline-info.mr-2(href=route('labelsEdit', { id: label.id }))= t('views.labels.index.edit')
+                    +formFor(action=route('labelsDestroy', { id: label.id }), method='post')
                       +buttonTo(labelsForm, 'delete').btn-danger
-      a.btn.btn-dark.btn-block(href=route('newLabel'))= t('views.labels.index.new')
+      a.btn.btn-dark.btn-block(href=route('labelsNew'))= t('views.labels.index.new')
     .col
