@@ -1,6 +1,5 @@
 import i18next from 'i18next';
 import { isEmpty } from 'lodash';
-import { parse } from 'qs';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
 
 export default (app) => {
@@ -25,20 +24,17 @@ export default (app) => {
         labels,
       };
       if (!isEmpty(req.query)) {
-        const parsedQueryString = parse(req.query);
-        const { taskStatusId, executorId, 'labels.id': labelsId } = parsedQueryString.form;
+        const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
         if (taskStatusId) {
-          const normalizedTaskStatusId = [Number.parseInt(taskStatusId, 10)];
-          queryTasks.whereIn('taskStatusId', normalizedTaskStatusId);
+          queryTasks.where('taskStatusId', Number.parseInt(taskStatusId, 10));
         }
         if (executorId) {
-          const normalizedExecutorId = [Number.parseInt(executorId, 10)];
-          queryTasks.whereIn('executorId', normalizedExecutorId);
+          queryTasks.where('executorId', Number.parseInt(executorId, 10));
         }
         if (labelsId) {
-          const normalizedLabelIds = Array.isArray(labels)
-            ? labels.map((el) => Number.parseInt(el, 10))
-            : [Number.parseInt(labels, 10)];
+          const normalizedLabelIds = Array.isArray(labelsId)
+            ? labelsId.map((el) => Number.parseInt(el, 10))
+            : [Number.parseInt(labelsId, 10)];
           queryTasks.whereIn('labels.id', normalizedLabelIds);
         }
       }

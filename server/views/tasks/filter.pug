@@ -1,7 +1,7 @@
 
 if tasks.length > 0
   +formFor().justify-content-between.mb-3.form-inline
-    +select(filterForm, 'taskStatuses', 'taskStatusId', true)
-    +select(filterForm, 'executors', 'executorId', true)
-    +select(filterForm, 'labels', 'labels.id', true)
+    +select(filterForm, 'taskStatuses', 'taskStatusId', true, false)
+    +select(filterForm, 'executors', 'executorId', true, false)
+    +select(filterForm, 'labels', 'labels.id', true, false)
     +submit(filterForm).bnt-block

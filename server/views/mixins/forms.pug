@@ -1,5 +1,4 @@
 - const getTranslationPath = (entity) => _.get(entity, 'translationPath');
-- const getInputName = (entity, property) => `${getTranslationPath(entity)}[${property}]`
 
 mixin formFor(entity = null)
   form&attributes(attributes)
@@ -22,15 +21,16 @@ mixin input(entity, propertyName, errors = {})
     if error
       .invalid-feedback= t(`views.${translationPath}.${propertyName}.error`)
 
-mixin select(entity, propertyName, nameOfSelect, isMultiple=false)
+mixin select(entity, propertyName, nameOfSelect, isMultiple=false, isForm=true)
   - const translationPath = getTranslationPath(entity)
   - const { currentTask } = entity
   - const values = entity[propertyName]
   - const selectId = `formControlSelect${nameOfSelect}`
   - const labelName = t(`views.${translationPath}.${propertyName}.label`)
+  - const selectName = isForm ? `form[${nameOfSelect}]` : nameOfSelect
   .form-group
     label(for=selectId)= `${labelName}:`
-    select.form-control(id=selectId name=`form[${nameOfSelect}]` multiple=isMultiple size='2')
+    select.form-control(id=selectId name=selectName multiple=isMultiple size='2')
       for value of values
         if currentTask && +currentTask[nameOfSelect] === +value.id
           option(value=value.id selected)= value.name
