@@ -77,7 +77,6 @@ export default (app) => {
         translationPath: 'tasks.edit',
         ...foundTask,
       };
-      console.log(taskForm);
       reply.render('/tasks/edit', {
         taskForm,
         taskStatuses,
