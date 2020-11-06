@@ -2,23 +2,25 @@ import request from 'supertest';
 import getApp from '../server';
 import {
   getTestData,
+  getSessionCookie,
   setApp,
   unsetApp,
-  getSettedDataFromDb,
 } from './helpers';
 
 let app;
+let testUser;
 let otherUser;
-const testData = getTestData('users');
+let updateUserData;
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const dbData = await getSettedDataFromDb(app);
-  otherUser = dbData.user1;
+  const testData = await getTestData(app);
+  testUser = testData.users.new.user;
+  otherUser = testData.users.existing1;
+  updateUserData = testData.users.new.update;
 });
 
 describe('User "CRUD"', () => {
-  let testUser = testData.user;
   test('Create new user', async () => {
     const res = await request(app.server)
       .post('/users')
@@ -33,12 +35,7 @@ describe('User "CRUD"', () => {
       .type('form')
       .send({ form: { email, password } });
     expect(res.status).toBe(302);
-    const sessionCookie = res
-      .headers['set-cookie']
-      .join()
-      .split(';')
-      .slice(0, 1)
-      .join();
+    const sessionCookie = getSessionCookie(res);
     const userId = await app.objection.models.user.query().findOne({ email });
     testUser.sessionCookie = sessionCookie;
     testUser.data.id = userId.id;
@@ -50,7 +47,7 @@ describe('User "CRUD"', () => {
     expect(res.status).toBe(200);
   });
   test('User change yourself', async () => {
-    const { password: newPassword, ...otherDataToUpdate } = testData.update;
+    const { password: newPassword, ...otherDataToUpdate } = updateUserData;
     const res = await request(app.server)
       .patch(`/users/${testUser.data.id}`)
       .set('cookie', testUser.sessionCookie)
@@ -68,12 +65,7 @@ describe('User "CRUD"', () => {
 
     expect(newData).not.toEqual(oldData);
     expect(newData).toEqual(otherDataToUpdate);
-    const sessionCookie = res
-      .headers['set-cookie']
-      .join()
-      .split(';')
-      .slice(0, 1)
-      .join();
+    const sessionCookie = getSessionCookie(res);
     testUser = {
       data: {
         id: testUserId,

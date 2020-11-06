@@ -4,7 +4,6 @@ import {
   getTestData,
   setApp,
   unsetApp,
-  getSettedDataFromDb,
 } from './helpers';
 
 let app;
@@ -12,21 +11,23 @@ let mainTestUser;
 let auxiliaryTestUser;
 let testLabel;
 let testTaskStatus;
-const testData = getTestData('tasks');
+let createTaskData;
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const dbData = await getSettedDataFromDb(app);
-  mainTestUser = dbData.user1;
-  auxiliaryTestUser = dbData.user2;
-  testLabel = dbData.label;
-  testTaskStatus = dbData.taskStatus;
+  const testData = await getTestData(app);
+  console.log(testData);
+  mainTestUser = testData.users.existing1;
+  auxiliaryTestUser = testData.users.existing2;
+  testLabel = testData.labels.existing;
+  testTaskStatus = testData.taskStatuses.existing;
+  createTaskData = testData.tasks.new.create;
 });
 
 describe('Test tasks CRUD', () => {
   let testTask;
   test('Create new task', async () => {
-    const { name } = testData.create;
+    const { name } = createTaskData;
     const res = await request(app.server)
       .post('/tasks')
       .set('cookie', mainTestUser.sessionCookie)

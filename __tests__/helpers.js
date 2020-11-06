@@ -3,9 +3,7 @@ import testData from './__fixtures__/testData';
 
 const { dataForTests, dataForDb } = testData;
 
-export const getTestData = (key) => dataForTests[key];
-
-const getSessionCookie = (res) => {
+export const getSessionCookie = (res) => {
   const sessionCookieAndPath = res.headers['set-cookie'];
   const sessionCookieAndPathToString = sessionCookieAndPath.join();
   const separateSessionCookieFromPath = sessionCookieAndPathToString.split(';').slice(0, 1);
@@ -35,44 +33,66 @@ export const setApp = async (appGetter) => {
   return app;
 };
 
-export const getSettedDataFromDb = async (app) => {
-  const [
-    insertedUser1,
-    insertedUser2,
-    insertedTaskStatus,
-    insertedLabel,
-    insertedTask,
-    authorizationRes1,
-    authorizationRes2,
-  ] = await Promise.all([
-    app.objection.models.user.query().findOne({ email: dataForDb.user1.email }),
-    app.objection.models.user.query().findOne({ email: dataForDb.user2.email }),
-    app.objection.models.taskStatus.query().findOne(dataForDb.taskStatus),
-    app.objection.models.label.query().findOne(dataForDb.label),
-    app.objection.models.task.query().findOne(dataForDb.task),
-    request(app.server).post('/session').type('form').send({ form: { email: dataForDb.user1.email, password: dataForDb.user1.password } }),
-    request(app.server).post('/session').type('form').send({ form: { email: dataForDb.user2.email, password: dataForDb.user2.password } }),
+const loginUser = async (app, user) => {
+  const userDataRequest = {
+    form: {
+      email: user.email,
+      password: user.password,
+    },
+  };
+  const authorizationRes = await request(app.server)
+    .post('/session')
+    .type('form')
+    .send(userDataRequest);
+  return authorizationRes;
+};
+
+const otherData = {
+  taskStatuses: {
+    existing: dataForDb.taskStatus,
+    new: {
+      create: dataForTests.taskStatuses.create,
+      update: dataForTests.taskStatuses.update,
+    },
+  },
+  labels: {
+    existing: dataForDb.label,
+    new: {
+      create: dataForTests.labels.create,
+      update: dataForTests.labels.update,
+    },
+  },
+  tasks: {
+    existing: dataForDb.task,
+    new: {
+      create: dataForTests.tasks.create,
+    },
+  },
+};
+
+export const getTestData = async (app) => {
+  const [user1LoginRes, user2LoginRes] = await Promise.all([
+    loginUser(app, dataForDb.user1),
+    loginUser(app, dataForDb.user2),
   ]);
-  const sessionCookie1 = getSessionCookie(authorizationRes1);
-  const sessionCookie2 = getSessionCookie(authorizationRes2);
+  const sessionCookie1 = getSessionCookie(user1LoginRes);
+  const sessionCookie2 = getSessionCookie(user2LoginRes);
   return {
-    user1: {
-      data: {
-        ...insertedUser1,
-        password: dataForDb.user1.password,
+    users: {
+      existing1: {
+        data: dataForDb.user1,
+        sessionCookie: sessionCookie1,
       },
-      sessionCookie: sessionCookie1,
-    },
-    user2: {
-      data: {
-        ...insertedUser2,
-        password: dataForDb.user2.password,
+      existing2: {
+        data: dataForDb.user2,
+        sessionCookie: sessionCookie2,
       },
-      sessionCookie: sessionCookie2,
+      new: {
+        user: dataForTests.users.user,
+        update: dataForTests.users.update,
+      },
     },
-    taskStatus: insertedTaskStatus,
-    label: insertedLabel,
-    task: insertedTask,
+    ...otherData,
   };
 };
 

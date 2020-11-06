@@ -3,7 +3,7 @@ import getApp from '../server';
 import {
   setApp,
   unsetApp,
-  getSettedDataFromDb,
+  getTestData,
 } from './helpers';
 
 let app;
@@ -24,8 +24,8 @@ const guestGetRequests = [
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const dbData = await getSettedDataFromDb(app);
-  testUserForAuth = dbData.user1;
+  const testData = await getTestData(app);
+  testUserForAuth = testData.users.existing1;
 });
 
 describe('Guest requests', () => {

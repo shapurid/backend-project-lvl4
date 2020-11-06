@@ -1,11 +1,13 @@
 {
     "dbUser1": {
+        "id": 1,
         "firstName": "Gilda",
         "lastName": "Zieme",
         "email": "Dillon38@gmail.com",
         "password": "AFL_T7O4Stq8rWz"
     },
     "dbUser2": {
+        "id": 2,
         "firstName": "Eduardo",
         "lastName": "Yundt",
         "email": "Maybell.Murazik@hotmail.com",

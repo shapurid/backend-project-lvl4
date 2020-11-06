@@ -5,23 +5,25 @@ import {
   getTestData,
   setApp,
   unsetApp,
-  getSettedDataFromDb,
 } from './helpers';
 
 let app;
 let testUser;
-const testData = getTestData('labels');
+let createLabelData;
+let updateLabelData;
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const dbData = await getSettedDataFromDb(app);
-  testUser = dbData.user1;
+  const testData = await getTestData(app);
+  testUser = testData.users.existing1;
+  createLabelData = testData.labels.new.create;
+  updateLabelData = testData.labels.new.update;
 });
 
 describe('Labels CRUD', () => {
   let testLabel;
   test('Create new label', async () => {
-    const { name } = testData.create;
+    const { name } = createLabelData;
     const res = await request(app.server)
       .post('/labels')
       .set('cookie', testUser.sessionCookie)
@@ -44,7 +46,7 @@ describe('Labels CRUD', () => {
     expect(res.status).toBe(200);
   });
   test('Update label', async () => {
-    const { name } = testData.update;
+    const { name } = updateLabelData;
     const res = await request(app.server)
       .patch(`/labels/${testLabel.id}/edit`)
       .set('cookie', testUser.sessionCookie)

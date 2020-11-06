@@ -18,7 +18,6 @@ export default {
     },
     tasks: {
       create: tasks.testTask,
-      update: tasks.testTaskUpdate,
     },
     taskStatuses: {
       create: taskStatuses.testTaskStatus,
