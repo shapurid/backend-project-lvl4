@@ -6,9 +6,9 @@ block content
     .col-6
       +formFor(action=route('tasksUpdate', { id: reply.request.params.id }) method='post')
         +input(taskForm, 'name', errors)
-        +select(taskForm, 'taskStatuses', 'taskStatusId')
-        +select(taskForm, 'executors', 'executorId')
-        +select(taskForm, 'labels', 'labels', true)
+        +select(taskForm, 'taskStatusId', taskStatuses)
+        +select(taskForm, 'executorId', executors)
+        +select(taskForm, 'labels', labels, true)
         +textarea(taskForm, 'description')
         +buttonTo(taskForm, 'patch').btn-warning.btn-block
     .col

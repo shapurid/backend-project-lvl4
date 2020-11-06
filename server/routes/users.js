@@ -47,20 +47,16 @@ export default (app) => {
         ...otherData,
         ...(password ? { passwordDigest: encrypt(password) } : {}),
       };
-      const userId = req.session.get('userId');
       try {
-        const currentUser = await app.objection.models.user.query().findById(userId);
-        await currentUser.$query().patch(bodyWithUpdatedPassword);
-        req.currentUser = currentUser;
+        await req.currentUser.$query().patch(bodyWithUpdatedPassword);
         req.flash('success', i18next.t('flash.users.modify.success'));
         reply.redirect(app.reverse('root'));
         return reply;
       } catch ({ data }) {
-        const currentUser = await app.objection.models.user.query().findById(userId);
         const userForm = { translationPath: 'users.profile', ...req.body.form };
         reply
           .code(422)
-          .render('/users/profile', { errors: data, userForm, ...currentUser });
+          .render('/users/profile', { errors: data, userForm, ...req.currentUser });
         return reply;
       }
     })

@@ -167,14 +167,16 @@ module.exports = {
       },
       tasks: {
         filters: {
-          taskStatuses: {
+          taskStatusId: {
             label: 'Статусы',
           },
-          executors: {
+          executorId: {
             label: 'Исполнители',
           },
           labels: {
-            label: 'Теги',
+            id: {
+              label: 'Теги',
+            },
           },
           submit: 'Применить фильтры',
         },
@@ -183,10 +185,10 @@ module.exports = {
             label: 'Введите имя задачи',
             error: 'Введите корректное имя задачи.',
           },
-          taskStatuses: {
+          taskStatusId: {
             label: 'Введите имя статуса задачи',
           },
-          executors: {
+          executorId: {
             label: 'Выберите исполнителя задачи',
           },
           labels: {
@@ -202,10 +204,10 @@ module.exports = {
             label: 'Введите имя задачи',
             error: 'Введите корректное имя задачи.',
           },
-          taskStatuses: {
+          taskStatusId: {
             label: 'Введите имя статуса задачи',
           },
-          executors: {
+          executorId: {
             label: 'Выберите исполнителя задачи',
           },
           labels: {

@@ -1,5 +1,4 @@
 import i18next from 'i18next';
-import { isEmpty } from 'lodash';
 import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
 
 export default (app) => {
@@ -17,29 +16,29 @@ export default (app) => {
         .task
         .query()
         .withGraphJoined('[taskStatus, creator, executor, labels]');
-      const filterForm = {
-        translationPath: 'tasks.filters',
+      const filterForm = { translationPath: 'tasks.filters' };
+      const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
+      if (taskStatusId) {
+        queryTasks.where('taskStatusId', Number.parseInt(taskStatusId, 10));
+      }
+      if (executorId) {
+        queryTasks.where('executorId', Number.parseInt(executorId, 10));
+      }
+      if (labelsId) {
+        const normalizedLabelIds = Array.isArray(labelsId)
+          ? labelsId.map((el) => Number.parseInt(el, 10))
+          : [Number.parseInt(labelsId, 10)];
+        queryTasks.whereIn('labels.id', normalizedLabelIds);
+      }
+      const tasks = await queryTasks;
+      reply.render('/tasks/index', {
+        taskForm,
+        tasks,
+        filterForm,
         taskStatuses,
         executors,
         labels,
-      };
-      if (!isEmpty(req.query)) {
-        const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
-        if (taskStatusId) {
-          queryTasks.where('taskStatusId', Number.parseInt(taskStatusId, 10));
-        }
-        if (executorId) {
-          queryTasks.where('executorId', Number.parseInt(executorId, 10));
-        }
-        if (labelsId) {
-          const normalizedLabelIds = Array.isArray(labelsId)
-            ? labelsId.map((el) => Number.parseInt(el, 10))
-            : [Number.parseInt(labelsId, 10)];
-          queryTasks.whereIn('labels.id', normalizedLabelIds);
-        }
-      }
-      const tasks = await queryTasks;
-      reply.render('/tasks/index', { taskForm, tasks, filterForm });
+      });
       return reply;
     })
     .get('/tasks/new', { name: 'tasksNew', preHandler: checkSignedIn }, async (req, reply) => {
@@ -48,13 +47,13 @@ export default (app) => {
         app.objection.models.label.query(),
         app.objection.models.taskStatus.query(),
       ]);
-      const taskForm = {
-        translationPath: 'tasks.new',
-        taskStatuses,
+      const taskForm = { translationPath: 'tasks.new' };
+      reply.render('/tasks/new', {
+        taskForm,
         executors,
         labels,
-      };
-      reply.render('/tasks/new', { taskForm });
+        taskStatuses,
+      });
       return reply;
     })
     .get('/tasks/:id/edit', { name: 'tasksEdit', preHandler: checkSignedIn }, async (req, reply) => {
@@ -76,12 +75,15 @@ export default (app) => {
       ]);
       const taskForm = {
         translationPath: 'tasks.edit',
-        currentTask: foundTask,
+        ...foundTask,
+      };
+      console.log(taskForm);
+      reply.render('/tasks/edit', {
+        taskForm,
         taskStatuses,
         executors,
         labels,
-      };
-      reply.render('/tasks/edit', { taskForm });
+      });
       return reply;
     })
     .post('/tasks', { name: 'tasksCreate', preHandler: checkSignedIn }, async (req, reply) => {
@@ -118,15 +120,18 @@ export default (app) => {
         ]);
         const taskForm = {
           translationPath: 'tasks.new',
-          taskStatuses,
-          executors,
-          labels: allLabels,
-          currentTask: req.body.form,
+          ...req.body.form,
         };
         req.flash('danger', i18next.t('flash.tasks.create.error'));
         reply
           .code(422)
-          .render('/tasks/new', { taskForm, errors: data });
+          .render('/tasks/new', {
+            taskForm,
+            taskStatuses,
+            executors,
+            labels: allLabels,
+            errors: data,
+          });
         return reply;
       }
     })
@@ -165,15 +170,18 @@ export default (app) => {
         ]);
         const taskForm = {
           translationPath: 'tasks.edit',
-          taskStatuses,
-          executors,
-          labels: allLabels,
-          currentTask: req.body.form,
+          ...req.body.form,
         };
         req.flash('danger', i18next.t('flash.tasks.modify.error'));
         reply
           .code(422)
-          .render('/tasks/edit', { taskForm, errors: data });
+          .render('/tasks/edit', {
+            taskForm,
+            taskStatuses,
+            executors,
+            labels: allLabels,
+            errors: data,
+          });
         return reply;
       }
     })

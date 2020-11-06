@@ -31,17 +31,17 @@ export default (app) => {
       }
     })
     .get('/labels/:id/edit', { name: 'labelsEdit', preHandler: checkSignedIn }, async (req, reply) => {
-      const labelName = await app
+      const label = await app
         .objection
         .models
         .label
         .query()
         .findById(req.params.id);
-      if (!labelName) {
+      if (!label) {
         reply.notFound();
         return reply;
       }
-      const labelsForm = { translationPath: 'label.edit', ...labelName };
+      const labelsForm = { translationPath: 'labels.edit', ...label };
       reply.render('/labels/edit', { labelsForm });
       return reply;
     })

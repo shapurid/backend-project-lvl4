@@ -6,9 +6,9 @@ block content
     .col-6
       +formFor(action=route('tasksCreate') method='post')
         +input(taskForm, 'name', errors)
-        +select(taskForm, 'taskStatuses', 'taskStatusId')
-        +select(taskForm, 'executors', 'executorId')
-        +select(taskForm, 'labels', 'labels', true)
+        +select(taskForm, 'taskStatusId', taskStatuses)
+        +select(taskForm, 'executorId', executors)
+        +select(taskForm, 'labels', labels, true)
         +textarea(taskForm, 'description')
         +submit(taskForm).bnt-block
     .col

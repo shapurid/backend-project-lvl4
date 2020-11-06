@@ -21,18 +21,15 @@ mixin input(entity, propertyName, errors = {})
     if error
       .invalid-feedback= t(`views.${translationPath}.${propertyName}.error`)
 
-mixin select(entity, propertyName, nameOfSelect, isMultiple=false, isForm=true)
+mixin select(entity, propertyName, values, isMultiple=false, isForm=true)
   - const translationPath = getTranslationPath(entity)
-  - const { currentTask } = entity
-  - const values = entity[propertyName]
-  - const selectId = `formControlSelect${nameOfSelect}`
   - const labelName = t(`views.${translationPath}.${propertyName}.label`)
-  - const selectName = isForm ? `form[${nameOfSelect}]` : nameOfSelect
+  - const selectName = isForm ? `form[${propertyName}]` : propertyName
   .form-group
     label(for=selectId)= `${labelName}:`
     select.form-control(id=selectId name=selectName multiple=isMultiple size='2')
       for value of values
-        if currentTask && +currentTask[nameOfSelect] === +value.id
+        if entity[propertyName] === value.id || _.some(entity[propertyName], (el) => el.id === value.id)
           option(value=value.id selected)= value.name
         else
           option(value=value.id)= value.name
@@ -42,7 +39,7 @@ mixin textarea(entity, propertyName)
   - const labelName = t(`views.${translationPath}.${propertyName}.label`)
   label= `${labelName}:`
   .form-group
-    textarea.form-control(type='text' name=`form[${propertyName}]` rows='3')
+    textarea.form-control(type='text' name=`form[${propertyName}]` rows='3')= entity[propertyName]
 
 mixin submit(entity)
   - const translationPath = getTranslationPath(entity);
