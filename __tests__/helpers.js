@@ -47,29 +47,6 @@ const loginUser = async (app, user) => {
   return authorizationRes;
 };
 
-const otherData = {
-  taskStatuses: {
-    existing: dataForDb.taskStatus,
-    new: {
-      create: dataForTests.taskStatuses.create,
-      update: dataForTests.taskStatuses.update,
-    },
-  },
-  labels: {
-    existing: dataForDb.label,
-    new: {
-      create: dataForTests.labels.create,
-      update: dataForTests.labels.update,
-    },
-  },
-  tasks: {
-    existing: dataForDb.task,
-    new: {
-      create: dataForTests.tasks.create,
-    },
-  },
-};
-
 export const getTestData = async (app) => {
   const [user1LoginRes, user2LoginRes] = await Promise.all([
     loginUser(app, dataForDb.user1),
@@ -87,12 +64,20 @@ export const getTestData = async (app) => {
         data: dataForDb.user2,
         sessionCookie: sessionCookie2,
       },
-      new: {
-        user: dataForTests.users.user,
-        update: dataForTests.users.update,
-      },
+      new: dataForTests.users,
     },
-    ...otherData,
+    taskStatuses: {
+      existing: dataForDb.taskStatus,
+      new: dataForTests.taskStatuses,
+    },
+    labels: {
+      existing: dataForDb.label,
+      new: dataForTests.labels,
+    },
+    tasks: {
+      existing: dataForDb.task,
+      new: dataForTests.tasks,
+    },
   };
 };
 
