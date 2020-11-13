@@ -7,11 +7,6 @@ const normalizeIds = (ids) => (Array.isArray(ids)
 
 export default class Task extends Model {
   static modifiers = {
-    withExecutorOrCreator(query, userId) {
-      query
-        .where('executorId', userId)
-        .orWhere('creatorId', userId);
-    },
     addTaskStatusesFilter(query, taskStatusId) {
       if (taskStatusId) {
         query.whereIn('taskStatusId', normalizeIds(taskStatusId));
