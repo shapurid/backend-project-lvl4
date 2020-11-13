@@ -1,29 +1,33 @@
 import request from 'supertest';
 import getApp from '../server';
-import Label from '../server/models/Label';
 import {
   getTestData,
+  setMigrationsAndData,
+  unsetMigrationsAndData,
   setApp,
   unsetApp,
 } from './helpers';
 
 let app;
-let testUser;
-let createLabelData;
-let updateLabelData;
+let testData;
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const testData = await getTestData(app);
-  testUser = testData.users.existing1;
-  createLabelData = testData.labels.new.create;
-  updateLabelData = testData.labels.new.update;
+});
+
+beforeEach(async () => {
+  await setMigrationsAndData(app);
+  testData = await getTestData(app);
+});
+
+afterEach(async () => {
+  await unsetMigrationsAndData(app);
 });
 
 describe('Labels CRUD', () => {
-  let testLabel;
   test('Create new label', async () => {
-    const { name } = createLabelData;
+    const testUser = testData.users.existing1;
+    const { name } = testData.labels.new.create;
     const res = await request(app.server)
       .post('/labels')
       .set('cookie', testUser.sessionCookie)
@@ -31,22 +35,25 @@ describe('Labels CRUD', () => {
       .send({ form: { name } });
     expect(res.status).toBe(302);
 
-    testLabel = await app
+    const foundLabel = await app
       .objection
       .models
       .label
       .query()
       .findOne({ name });
-    expect(testLabel).toBeInstanceOf(Label);
+    expect(foundLabel.name).toBe(name);
   });
   test('Read labels', async () => {
+    const testUser = testData.users.existing1;
     const res = await request(app.server)
       .get('/labels')
       .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(200);
   });
   test('Update label', async () => {
-    const { name } = updateLabelData;
+    const testUser = testData.users.existing1;
+    const testLabel = testData.labels.existing;
+    const { name } = testData.labels.new.update;
     const res = await request(app.server)
       .patch(`/labels/${testLabel.id}/edit`)
       .set('cookie', testUser.sessionCookie)
@@ -54,22 +61,29 @@ describe('Labels CRUD', () => {
       .send({ form: { name } });
     expect(res.status).toBe(302);
 
-    const newTestLabelData = await app
+    const foundLabel = await app
       .objection
       .models
       .label
       .query()
-      .findOne({ name });
-
-    expect(testLabel.id).toBe(newTestLabelData.id);
-    expect(testLabel.name).not.toBe(newTestLabelData.name);
-    testLabel = newTestLabelData;
+      .findById(testLabel.id);
+    expect(foundLabel.name).toBe(name);
   });
   test('Delete label', async () => {
+    const testUser = testData.users.existing1;
+    const testLabel = testData.labels.existing;
     const res = await request(app.server)
       .delete(`/labels/${testLabel.id}`)
       .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(302);
+
+    const foundLabel = await app
+      .objection
+      .models
+      .label
+      .query()
+      .findById(testLabel.id);
+    expect(foundLabel).toBeUndefined();
   });
 });
 

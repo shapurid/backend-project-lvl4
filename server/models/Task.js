@@ -1,7 +1,34 @@
 import { Model } from 'objection';
 import { join } from 'path';
 
+const normalizeIds = (ids) => (Array.isArray(ids)
+  ? ids.map((id) => Number.parseInt(id, 10))
+  : [Number.parseInt(ids, 10)]);
+
 export default class Task extends Model {
+  static modifiers = {
+    withExecutorOrCreator(query, userId) {
+      query
+        .where('executorId', userId)
+        .orWhere('creatorId', userId);
+    },
+    addTaskStatusesFilter(query, taskStatusId) {
+      if (taskStatusId) {
+        query.whereIn('taskStatusId', normalizeIds(taskStatusId));
+      }
+    },
+    addExecutorsFilter(query, executorId) {
+      if (executorId) {
+        query.whereIn('executorId', normalizeIds(executorId));
+      }
+    },
+    addLabelsFilter(query, labelsId) {
+      if (labelsId) {
+        query.whereIn('labels.id', normalizeIds(labelsId));
+      }
+    },
+  }
+
   static get tableName() {
     return 'tasks';
   }

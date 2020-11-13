@@ -1,4 +1,5 @@
 import { Model } from 'objection';
+import { join } from 'path';
 import objectionUnique from 'objection-unique';
 import encrypt from '../lib/encrypt';
 
@@ -38,6 +39,27 @@ export default class User extends unique(Model) {
           type: 'string',
           minLength: 3,
           maxLength: 255,
+        },
+      },
+    };
+  }
+
+  static get relationMappings() {
+    return {
+      tasksCreator: {
+        relation: Model.HasManyRelation,
+        modelClass: join(__dirname, 'Task'),
+        join: {
+          from: 'users.id',
+          to: 'tasks.creatorId',
+        },
+      },
+      tasksExecutor: {
+        relation: Model.HasManyRelation,
+        modelClass: join(__dirname, 'Task'),
+        join: {
+          from: 'users.id',
+          to: 'tasks.executorId',
         },
       },
     };

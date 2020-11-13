@@ -2,6 +2,7 @@ import request from 'supertest';
 import getApp from '../server';
 import {
   setApp,
+  setMigrationsAndData,
   unsetApp,
   getTestData,
 } from './helpers';
@@ -24,6 +25,7 @@ const guestGetRequests = [
 
 beforeAll(async () => {
   app = await setApp(getApp);
+  await setMigrationsAndData(app);
   const testData = await getTestData(app);
   testUserForAuth = testData.users.existing1;
 });

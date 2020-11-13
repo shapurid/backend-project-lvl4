@@ -2,7 +2,8 @@
     "dbTask": {
         "id": 1,
         "name": "Dollar",
-        "description": "ab delectus aut"
+        "description": "ab delectus aut",
+        "creatorId": 1
     },
     "testTask": {
         "name": "ratione"

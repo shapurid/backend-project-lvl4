@@ -8,6 +8,7 @@ import fastifyFormBody from 'fastify-formbody';
 import fastifyFlash from 'fastify-flash';
 import fastifySensible from 'fastify-sensible';
 import fastifyReverseRoutes from 'fastify-reverse-routes';
+import fastifyAuth from 'fastify-auth';
 import Pug from 'pug';
 import pointOfView from 'point-of-view';
 import dotenv from 'dotenv';
@@ -92,7 +93,6 @@ const registerPlugins = (app) => {
       path: '/',
     },
   });
-  app.register(fastifyFlash);
   app.register(fastifyReverseRoutes.plugin);
   app
     .register(fastifySensible)
@@ -107,6 +107,8 @@ const registerPlugins = (app) => {
       rollbar.log(err);
       return reply;
     }));
+  app.register(fastifyAuth);
+  app.register(fastifyFlash);
 };
 
 const addHooks = (app) => {
@@ -140,6 +142,6 @@ export default () => {
   setUpViews(app);
   setUpStaticAssets(app);
   addHooks(app);
-  addRoutes(app);
+  app.after(() => addRoutes(app));
   return app;
 };

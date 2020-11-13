@@ -12,25 +12,38 @@ export const getSessionCookie = (res) => {
 
 export const setApp = async (appGetter) => {
   const app = await appGetter().ready();
+  return app;
+};
+
+export const setMigrationsAndData = async (app) => {
   await app
     .objection
     .knex
     .migrate
     .latest();
-  const [insertedUser1, insertedTaskStatus, insertedLabel] = await Promise.all([
+  const [insertedUser1, insertedTaskStatus1, insertedLabel] = await Promise.all([
     app.objection.models.user.query().insert(dataForDb.user1),
-    app.objection.models.taskStatus.query().insert(dataForDb.taskStatus),
+    app.objection.models.taskStatus.query().insert(dataForDb.taskStatus1),
     app.objection.models.label.query().insert(dataForDb.label),
   ]);
-  const insertedUser2 = await app.objection.models.user.query().insert(dataForDb.user2);
-  await app.objection.models.task.query().insertGraph({
-    creatorId: insertedUser1.id,
-    executorId: insertedUser2.id,
-    taskStatusId: insertedTaskStatus.id,
-    labels: insertedLabel,
-    ...dataForDb.task,
-  }, { relate: true });
-  return app;
+  await Promise.all([
+    app.objection.models.user.query().insert(dataForDb.user2),
+    app.objection.models.taskStatus.query().insert(dataForDb.taskStatus2),
+    app.objection.models.task.query().insertGraph({
+      creatorId: insertedUser1.id,
+      taskStatusId: insertedTaskStatus1.id,
+      labels: insertedLabel,
+      ...dataForDb.task,
+    }, { relate: true }),
+  ]);
+};
+
+export const unsetMigrationsAndData = async (app) => {
+  await app
+    .objection
+    .knex
+    .migrate
+    .rollback();
 };
 
 const loginUser = async (app, user) => {
@@ -67,7 +80,8 @@ export const getTestData = async (app) => {
       new: dataForTests.users,
     },
     taskStatuses: {
-      existing: dataForDb.taskStatus,
+      existing1: dataForDb.taskStatus1,
+      existing2: dataForDb.taskStatus2,
       new: dataForTests.taskStatuses,
     },
     labels: {

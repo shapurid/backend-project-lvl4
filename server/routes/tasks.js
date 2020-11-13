@@ -1,36 +1,26 @@
 import i18next from 'i18next';
-import { checkSignedIn, checkTaskOwnership } from '../lib/preHandlers';
+import { checkSignedIn, checkTaskOwnership } from '../lib/auth';
 
 export default (app) => {
   app
-    .get('/tasks', { name: 'tasksIndex', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/tasks', { name: 'tasksIndex', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const taskForm = { translationPath: 'tasks.index' };
       const [taskStatuses, executors, labels] = await Promise.all([
         app.objection.models.taskStatus.query(),
         app.objection.models.user.query(),
         app.objection.models.label.query(),
       ]);
-      const queryTasks = app
+      const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
+      const filterForm = { translationPath: 'tasks.filters' };
+      const tasks = await app
         .objection
         .models
         .task
         .query()
-        .withGraphJoined('[taskStatus, creator, executor, labels]');
-      const filterForm = { translationPath: 'tasks.filters' };
-      const { taskStatusId, executorId, 'labels.id': labelsId } = req.query;
-      if (taskStatusId) {
-        queryTasks.where('taskStatusId', Number.parseInt(taskStatusId, 10));
-      }
-      if (executorId) {
-        queryTasks.where('executorId', Number.parseInt(executorId, 10));
-      }
-      if (labelsId) {
-        const normalizedLabelIds = Array.isArray(labelsId)
-          ? labelsId.map((el) => Number.parseInt(el, 10))
-          : [Number.parseInt(labelsId, 10)];
-        queryTasks.whereIn('labels.id', normalizedLabelIds);
-      }
-      const tasks = await queryTasks;
+        .withGraphJoined('[taskStatus, creator, executor, labels]')
+        .modify('addTaskStatusesFilter', taskStatusId)
+        .modify('addExecutorsFilter', executorId)
+        .modify('addLabelsFilter', labelsId);
       reply.render('/tasks/index', {
         taskForm,
         tasks,
@@ -41,7 +31,7 @@ export default (app) => {
       });
       return reply;
     })
-    .get('/tasks/new', { name: 'tasksNew', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/tasks/new', { name: 'tasksNew', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const [executors, labels, taskStatuses] = await Promise.all([
         app.objection.models.user.query(),
         app.objection.models.label.query(),
@@ -56,7 +46,7 @@ export default (app) => {
       });
       return reply;
     })
-    .get('/tasks/:id/edit', { name: 'tasksEdit', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/tasks/:id/edit', { name: 'tasksEdit', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const foundTask = await app
         .objection
         .models
@@ -85,7 +75,7 @@ export default (app) => {
       });
       return reply;
     })
-    .post('/tasks', { name: 'tasksCreate', preHandler: checkSignedIn }, async (req, reply) => {
+    .post('/tasks', { name: 'tasksCreate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const {
         name,
         taskStatusId,
@@ -134,7 +124,7 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/tasks/:id/edit', { name: 'tasksUpdate', preHandler: checkSignedIn }, async (req, reply) => {
+    .patch('/tasks/:id/edit', { name: 'tasksUpdate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const {
         name,
         taskStatusId,
@@ -184,7 +174,10 @@ export default (app) => {
         return reply;
       }
     })
-    .delete('/tasks/u:creatorId/:id', { name: 'tasksDestroy', preHandler: checkTaskOwnership }, async (req, reply) => {
+    .delete('/tasks/u:creatorId/:id', {
+      name: 'tasksDestroy',
+      preHandler: app.auth([checkSignedIn, checkTaskOwnership], { run: 'all' }),
+    }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       await task.$relatedQuery('labels').unrelate();
       await task.$query().delete();

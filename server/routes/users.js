@@ -1,16 +1,16 @@
 import { pickBy, isEmpty } from 'lodash';
 import i18next from 'i18next';
-import { checkSignedIn, checkProfileOwnership } from '../lib/preHandlers';
+import { checkSignedIn, checkProfileOwnership } from '../lib/auth';
 import encrypt from '../lib/encrypt';
 
 export default (app) => {
   app
-    .get('/users', { name: 'usersIndex', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/users', { name: 'usersIndex', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const users = await app.objection.models.user.query().select('id', 'firstName', 'lastName', 'email');
       reply.render('/users/index', { users });
       return reply;
     })
-    .get('/users/:id', { name: 'usersShow', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/users/:id', { name: 'usersShow', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const user = await app.objection.models.user.query().select('firstName', 'lastName', 'email').findById(req.params.id);
       if (!user) {
         reply.notFound();
@@ -40,7 +40,10 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/users/:id', { name: 'usersUpdate', preHandler: checkProfileOwnership }, async (req, reply) => {
+    .patch('/users/:id', {
+      name: 'usersUpdate',
+      preHandler: app.auth([checkSignedIn, checkProfileOwnership], { run: 'all' }),
+    }, async (req, reply) => {
       const filteredBody = pickBy(req.body.form, (el) => el.length > 0);
       const { password, ...otherData } = filteredBody;
       const bodyWithUpdatedPassword = {
@@ -60,21 +63,24 @@ export default (app) => {
         return reply;
       }
     })
-    .delete('/users/:id', { name: 'usersDestroy', preHandler: checkProfileOwnership }, async (req, reply) => {
+    .delete('/users/:id', {
+      name: 'usersDestroy',
+      preHandler: app.auth([checkSignedIn, checkProfileOwnership], { run: 'all' }),
+    }, async (req, reply) => {
       const userId = req.session.get('userId');
-      const taksCreatorOrExecutor = await app
+      const user = await app
         .objection
         .models
-        .task
+        .user
         .query()
-        .where('creatorId', userId)
-        .orWhere('executorId', userId);
-      if (!isEmpty(taksCreatorOrExecutor)) {
+        .findById(userId)
+        .withGraphJoined('[tasksCreator, tasksExecutor]');
+      if (!isEmpty(user.tasksCreator) || !isEmpty(user.tasksExecutor)) {
         req.flash('danger', i18next.t('flash.users.delete.error'));
-        reply.redirect(app.reverse('tasks'));
+        reply.redirect(422, app.reverse('tasksIndex'));
         return reply;
       }
-      await app.objection.models.user.query().deleteById(userId);
+      await user.$query().delete();
       req.session.set('userId', null);
       req.flash('success', i18next.t('flash.users.delete.success'));
       reply.redirect(app.reverse('root'));

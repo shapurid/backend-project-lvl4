@@ -1,7 +1,11 @@
 {
-    "dbTaskStatus": {
+    "dbTaskStatus1": {
         "id": 1,
         "name": "quam"
+    },
+    "dbTaskStatus2": {
+        "id": 2,
+        "name": "guram"
     },
     "testTaskStatus": {
         "name": "aut"

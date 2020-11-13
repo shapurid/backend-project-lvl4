@@ -1,20 +1,20 @@
 import i18next from 'i18next';
-import { checkSignedIn } from '../lib/preHandlers';
+import { checkSignedIn } from '../lib/auth';
 
 export default (app) => {
   app
-    .get('/labels', { name: 'labelsIndex', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/labels', { name: 'labelsIndex', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const labelsForm = { translationPath: 'labels.index' };
       const labels = await app.objection.models.label.query();
       reply.render('/labels/index', { labelsForm, labels });
       return reply;
     })
-    .get('/labels/new', { name: 'labelsNew', preHandler: checkSignedIn }, (req, reply) => {
+    .get('/labels/new', { name: 'labelsNew', preHandler: app.auth([checkSignedIn]) }, (req, reply) => {
       const labelsForm = { translationPath: 'labels.new' };
       reply.render('/labels/new', { labelsForm });
       return reply;
     })
-    .post('/labels', { name: 'labelsCreate', preHandler: checkSignedIn }, async (req, reply) => {
+    .post('/labels', { name: 'labelsCreate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       try {
         const label = await app.objection.models.label.fromJson(req.body.form);
         await app.objection.models.label.query().insert(label);
@@ -30,7 +30,7 @@ export default (app) => {
         return reply;
       }
     })
-    .get('/labels/:id/edit', { name: 'labelsEdit', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/labels/:id/edit', { name: 'labelsEdit', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const label = await app
         .objection
         .models
@@ -45,7 +45,7 @@ export default (app) => {
       reply.render('/labels/edit', { labelsForm });
       return reply;
     })
-    .patch('/labels/:id/edit', { name: 'labelsUpdate', preHandler: checkSignedIn }, async (req, reply) => {
+    .patch('/labels/:id/edit', { name: 'labelsUpdate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       try {
         const newData = await app.objection.models.label.fromJson(req.body.form);
         const tag = await app.objection.models.label.query().findById(req.params.id);
@@ -62,7 +62,7 @@ export default (app) => {
         return reply;
       }
     })
-    .delete('/labels/:id', { name: 'labelsDestroy', preHandler: checkSignedIn }, async (req, reply) => {
+    .delete('/labels/:id', { name: 'labelsDestroy', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const label = await app.objection.models.label.query().findById(req.params.id);
       await label.$relatedQuery('tasks').unrelate();
       await label.$query().delete();

@@ -2,62 +2,66 @@ import request from 'supertest';
 import getApp from '../server';
 import {
   getTestData,
+  setMigrationsAndData,
+  unsetMigrationsAndData,
   setApp,
   unsetApp,
 } from './helpers';
 
 let app;
-let mainTestUser;
-let auxiliaryTestUser;
-let testLabel;
-let testTaskStatus;
-let createTaskData;
+let testData;
 
 beforeAll(async () => {
   app = await setApp(getApp);
-  const testData = await getTestData(app);
-  console.log(testData);
-  mainTestUser = testData.users.existing1;
-  auxiliaryTestUser = testData.users.existing2;
-  testLabel = testData.labels.existing;
-  testTaskStatus = testData.taskStatuses.existing;
-  createTaskData = testData.tasks.new.create;
+});
+
+beforeEach(async () => {
+  await setMigrationsAndData(app);
+  testData = await getTestData(app);
+});
+
+afterEach(async () => {
+  await unsetMigrationsAndData(app);
 });
 
 describe('Test tasks CRUD', () => {
-  let testTask;
   test('Create new task', async () => {
-    const { name } = createTaskData;
+    const testUser = testData.users.existing1;
+    const createData = {
+      name: testData.tasks.new.create.name,
+      taskStatusId: testData.taskStatuses.existing1.id,
+      executorId: testData.users.existing2.data.id,
+    };
     const res = await request(app.server)
       .post('/tasks')
-      .set('cookie', mainTestUser.sessionCookie)
+      .set('cookie', testUser.sessionCookie)
       .type('form')
-      .send({
-        form: {
-          name,
-          taskStatusId: testTaskStatus.id,
-          executorId: auxiliaryTestUser.id,
-          labels: testLabel.id,
-        },
-      });
+      .send({ form: createData });
     expect(res.status).toBe(302);
 
-    const foundTask = await app
+    const {
+      id,
+      description,
+      createdAt,
+      updatedAt,
+      ...otherFoundTaskData
+    } = await app
       .objection
       .models
       .task
       .query()
-      .findOne({ name });
-
-    testTask = await foundTask.$query().withGraphJoined('[taskStatus, creator, executor, labels]');
+      .findOne({ name: testData.tasks.new.create.name });
+    expect(otherFoundTaskData).toEqual({ creatorId: testUser.data.id, ...createData });
   });
   test('Read tasks', async () => {
+    const testUser = testData.users.existing1;
     const res = await request(app.server)
       .get('/tasks')
-      .set('cookie', mainTestUser.sessionCookie);
+      .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(200);
   });
   test('Update task error', async () => {
+    const testTask = testData.tasks.existing;
     const res = await request(app.server)
       .patch(`/tasks/${testTask.id}/edit`)
       .type('form')
@@ -65,9 +69,12 @@ describe('Test tasks CRUD', () => {
     expect(res.status).toBe(403);
   });
   test('Update task', async () => {
+    const testUser = testData.users.existing1;
+    const testTaskStatus = testData.taskStatuses.existing2;
+    const testTask = testData.tasks.existing;
     const res = await request(app.server)
       .patch(`/tasks/${testTask.id}/edit`)
-      .set('cookie', mainTestUser.sessionCookie)
+      .set('cookie', testUser.sessionCookie)
       .type('form')
       .send({ form: { name: testTask.name, taskStatusId: testTaskStatus.id } });
     expect(res.status).toBe(302);
@@ -76,21 +83,40 @@ describe('Test tasks CRUD', () => {
       .models
       .task
       .query()
-      .findOne({ name: testTask.name });
+      .findById(testTask.id);
     expect(foundTask).not.toEqual(testTask);
-    testTask = foundTask;
   });
   test('Delete task error', async () => {
+    const testUser = testData.users.existing2;
+    const testTask = testData.tasks.existing;
     const res = await request(app.server)
       .delete(`/tasks/u${testTask.creatorId}/${testTask.id}`)
-      .set('cookie', auxiliaryTestUser.sessionCookie);
+      .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(403);
+
+    const foundTask = await app
+      .objection
+      .models
+      .task
+      .query()
+      .findById(testTask.id);
+    expect(foundTask).not.toBeUndefined();
   });
   test('Delete task', async () => {
+    const testUser = testData.users.existing1;
+    const testTask = testData.tasks.existing;
     const res = await request(app.server)
       .delete(`/tasks/u${testTask.creatorId}/${testTask.id}`)
-      .set('cookie', mainTestUser.sessionCookie);
+      .set('cookie', testUser.sessionCookie);
     expect(res.status).toBe(302);
+
+    const foundTask = await app
+      .objection
+      .models
+      .task
+      .query()
+      .findById(testTask.id);
+    expect(foundTask).toBeUndefined();
   });
 });
 

@@ -1,20 +1,20 @@
 import i18next from 'i18next';
-import { checkSignedIn } from '../lib/preHandlers';
+import { checkSignedIn } from '../lib/auth';
 
 export default (app) => {
   app
-    .get('/taskStatuses', { name: 'taskStatusesIndex', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/taskStatuses', { name: 'taskStatusesIndex', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const taskStatusForm = { translationPath: 'taskStatuses.index' };
       const statusList = await app.objection.models.taskStatus.query();
       reply.render('/taskStatuses/index', { taskStatusForm, statusList });
       return reply;
     })
-    .get('/taskStatuses/new', { name: 'taskStatusesNew', preHandler: checkSignedIn }, (req, reply) => {
+    .get('/taskStatuses/new', { name: 'taskStatusesNew', preHandler: app.auth([checkSignedIn]) }, (req, reply) => {
       const taskStatusForm = { translationPath: 'taskStatuses.new' };
       reply.render('/taskStatuses/new', { taskStatusForm });
       return reply;
     })
-    .get('/taskStatuses/:id/edit', { name: 'taskStatusesEdit', preHandler: checkSignedIn }, async (req, reply) => {
+    .get('/taskStatuses/:id/edit', { name: 'taskStatusesEdit', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const taskStatus = await app
         .objection
         .models
@@ -29,7 +29,7 @@ export default (app) => {
       reply.render('/taskStatuses/edit', { taskStatusForm });
       return reply;
     })
-    .post('/taskStatuses', { name: 'taskStatusesCreate', preHandler: checkSignedIn }, async (req, reply) => {
+    .post('/taskStatuses', { name: 'taskStatusesCreate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       try {
         const status = await app.objection.models.taskStatus.fromJson(req.body.form);
         await app.objection.models.taskStatus.query().insert(status);
@@ -45,7 +45,7 @@ export default (app) => {
         return reply;
       }
     })
-    .patch('/taskStatuses/:id/edit', { name: 'taskStatusesUpdate', preHandler: checkSignedIn }, async (req, reply) => {
+    .patch('/taskStatuses/:id/edit', { name: 'taskStatusesUpdate', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const { name } = req.body.form;
       if (!name) {
         reply
@@ -63,7 +63,7 @@ export default (app) => {
       reply.redirect(app.reverse('taskStatusesIndex'));
       return reply;
     })
-    .delete('/taskStatuses/:id', { name: 'taskStatusesDestroy', preHandler: checkSignedIn }, async (req, reply) => {
+    .delete('/taskStatuses/:id', { name: 'taskStatusesDestroy', preHandler: app.auth([checkSignedIn]) }, async (req, reply) => {
       const normalizedId = Number.parseInt(req.params.id, 10);
       const relatedTask = await app
         .objection
@@ -73,7 +73,7 @@ export default (app) => {
         .findOne({ taskStatusId: normalizedId });
       if (relatedTask) {
         req.flash('danger', i18next.t('flash.taskStatuses.delete.error'));
-        reply.redirect(app.reverse('taskStatusesIndex'));
+        reply.redirect(422, app.reverse('taskStatusesIndex'));
         return reply;
       }
       await app.objection.models.taskStatus.query().deleteById(normalizedId);

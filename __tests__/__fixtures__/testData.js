@@ -7,7 +7,8 @@ export default {
   dataForDb: {
     user1: users.dbUser1,
     user2: users.dbUser2,
-    taskStatus: taskStatuses.dbTaskStatus,
+    taskStatus1: taskStatuses.dbTaskStatus1,
+    taskStatus2: taskStatuses.dbTaskStatus2,
     label: labels.dbLabel,
     task: tasks.dbTask,
   },
