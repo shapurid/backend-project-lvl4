@@ -7,8 +7,8 @@ export const checkSignedIn = (req, reply, done) => {
 };
 
 export const checkProfileOwnership = (req, reply, done) => {
-  const normalizedRouteId = Number.parseInt(req.params.id, 10);
-  if (normalizedRouteId !== req.session.get('userId')) {
+  const normalizedUserId = Number.parseInt(req.params.id, 10);
+  if (normalizedUserId !== req.session.get('userId')) {
     reply.forbidden();
     return reply;
   }
